@@ -1,0 +1,62 @@
+name: Read repositories list
+on: 
+  push:
+  workflow_dispatch:
+
+env:
+  DC_TYPE: plugin
+  DA_URL: https://repo.dotclear.watch/console/api/v1
+
+jobs:
+  read_list:
+      - name: Check DA repository
+        id: dialog
+        shell: php {0}
+        run: |
+          <?php
+          // parse variables
+          $type = '${{ env.DC_TYPE }}';
+
+          // authenticate to DA
+          $ch = curl_init();
+          curl_setopt_array($ch, [
+            CURLOPT_URL => '${{ env.DA_URL }}/auth',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => http_build_query([
+              'username' => '${{ secrets.DA_USERNAME }}',
+              'password' => '${{ secrets.DA_PASSWORD }}',
+            ]),
+          ]);
+          $rsp = json_decode((string) curl_exec($ch), true);
+          curl_close ($ch);
+          if (!is_array($rsp) || !isset($rsp['token'])) {
+            file_put_contents(getenv('GITHUB_OUTPUT'), "message=Failed to get token\n", FILE_APPEND);
+            return;
+          }
+          $token = $rsp['token'];
+
+          // Check latest contribution
+          $ch = curl_init();
+          curl_setopt_array($ch, [
+            CURLOPT_URL => '${{ env.DA_URL }}/mine/${{ env.DC_TYPE }}',
+            CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $token],
+            CURLOPT_HEADER => false,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => [],
+          ]);
+          $rsp = json_decode((string) curl_exec($ch), true);
+          curl_close($ch);
+          if (!is_array($rsp)) {
+            file_put_contents(getenv('GITHUB_OUTPUT'), "message=Failed to get latest contribution\n", FILE_APPEND);
+            return;
+          }
+          $res = [];
+          foreach($rsp as $module => $info) {
+            if ($info['status'] == 'approved') {
+              $res[] = $module . ' ' . $info['version'];
+            }
+          }
+
+          file_put_contents(getenv('GITHUB_OUTPUT'), print_r($res, true), FILE_APPEND);
