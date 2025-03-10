@@ -1,0 +1,147 @@
+name: Update
+on: 
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: The repository URL
+        required: true
+        type: string
+        default: 'https://repo.dotclear.watch/console/api/v1'
+      module_type:
+        description: The module type
+        required: true
+        type: choice
+        default: 'plugin'
+        options:
+        - plugin
+        - theme
+      module_id:
+        description: The module ID
+        required: true
+        type: string
+      module_version:
+        description: The module current version
+        required: true
+        type: string
+
+jobs:
+  version:
+    name: Check version
+    runs-on: ubuntu-latest
+    outputs:
+      local: ${{ steps.local.outputs.version }}
+      newer: ${{ steps.compare.outputs.newer }}
+    steps:
+      - name: Get repository latest release
+        id: release
+        uses: pozetroninc/github-action-get-latest-release@master
+        with:
+          repository: "${{ github.repository_owner }}/${{ inputs.module_id }}"
+      - name: Parse local version
+        id: local
+        run: |
+          version="${{ steps.release.outputs.release }}"
+          echo "version=${version:1}" >> $GITHUB_OUTPUT
+
+      - name: Compare version
+        id: compare
+        run: |
+          echo '* DA: ${{ inputs.module_version }}' >> $GITHUB_STEP_SUMMARY
+          echo '* GH: ${{ steps.local.outputs.version }}' >> $GITHUB_STEP_SUMMARY
+          function version { echo "$@" | awk -F. '{ printf("%d%04d%03d\n", $1,$2,$3); }'; }
+          if [ $(version '${{ steps.local.outputs.version }}') -gt $(version '${{ inputs.module_version }}') ]; then
+          echo '* Module ${{ inputs.module_id }} ${{ inputs.module_version }} has newer version ${{ steps.local.outputs.version }}' >> $GITHUB_STEP_SUMMARY
+          echo "newer=true" >> $GITHUB_OUTPUT
+          else
+          echo '* Module ${{ inputs.module_id }} ${{ inputs.module_version }} is up to date' >> $GITHUB_STEP_SUMMARY
+          echo "newer=false" >> $GITHUB_OUTPUT
+          fi
+
+  update:
+    needs: version
+    name: Update version
+    runs-on: ubuntu-latest
+    if: (needs.version.outputs.newer == 'true')
+    steps:
+      - name: Update DA repository
+        id: dialog
+        shell: php {0}
+        run: |
+          <?php
+          // parse variables
+          $type = '${{ inputs.module_type }}';
+          $owner = '${{ github.repository_owner }}';
+          $module = '${{ inputs.module_id }}';
+          $version = '${{ needs.version.outputs.local }}';
+          $zip_url = 'https://github.com/'.$owner.'/'.$module.'/releases/download/v'.$version.'/'.$type.'-'.$module.'.zip';
+          file_put_contents(getenv('GITHUB_OUTPUT'), "version=$version\n", FILE_APPEND);
+          file_put_contents(getenv('GITHUB_OUTPUT'), "module=$module\n", FILE_APPEND);
+
+          // authenticate to DA
+          echo "Authenticate to DA API.\n";
+          $ch = curl_init();
+          curl_setopt_array($ch, [
+            CURLOPT_URL => '${{ inputs.api_url }}/auth',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => http_build_query([
+              'username' => '${{ secrets.DA_USERNAME }}',
+              'password' => '${{ secrets.DA_PASSWORD }}',
+            ]),
+          ]);
+          $rsp = json_decode((string) curl_exec($ch), true);
+          curl_close ($ch);
+          if (!is_array($rsp) || !isset($rsp['token'])) {
+            file_put_contents(getenv('GITHUB_OUTPUT'), "message=Failed to get token\n", FILE_APPEND);
+            echo 'Failed to get token';
+            return;
+          }
+          $token = $rsp['token'];
+
+          // Get zip content
+          echo 'Grab module zip at ' . $zip_url . "\n";
+          $ch = curl_init();
+          curl_setopt_array($ch, [
+            CURLOPT_URL => $zip_url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true, 
+          ]);
+          $zip_cnt = chunk_split(base64_encode((string) curl_exec($ch)));
+          curl_close ($ch);
+          if (strlen($zip_cnt) < 16) {
+            file_put_contents(getenv('GITHUB_OUTPUT'), "message=Failed to get zip content\n", FILE_APPEND);
+            echo 'Failed to get zip content';
+            return;
+          }
+
+          // Update DA
+          echo "Update DA contribution.\n";
+          $ch = curl_init();
+          curl_setopt_array($ch, [
+            CURLOPT_URL => '${{ inputs.api_url }}/update/${{ inputs.module_type }}',
+            CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $token],
+            CURLOPT_HEADER => false,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => ['zip' => $zip_cnt],
+          ]);
+          $rsp = json_decode((string) curl_exec($ch), true);
+          curl_close($ch);
+          if (is_array($rsp) && isset($rsp['message'])) {
+            file_put_contents(getenv('GITHUB_OUTPUT'), "message=" . $rsp['message'] . "\n", FILE_APPEND);
+            echo $rsp['message'];
+          }
+
+      - name: summary
+        run: echo '${{ steps.dialog.outputs.module }} ${{ steps.dialog.outputs.version }} = ${{ steps.dialog.outputs.message }}' >> $GITHUB_STEP_SUMMARY
+
+      - name: Send Telegram Message Ok
+        uses: appleboy/telegram-action@v1.0.0
+        with:
+          to: ${{ secrets.TELEGRAM_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
+          message: |
+            __Dotaddict contribution update__
+            - Module: ${{ steps.dialog.outputs.module }} ${{ steps.dialog.outputs.version }} 
+            - Response: ${{ steps.dialog.outputs.message }}

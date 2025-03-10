@@ -1,0 +1,104 @@
+name: Read
+on:
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: The DA API URL
+        required: true
+        type: string
+        default: 'https://repo.dotclear.watch/console/api/v1'
+      module_type:
+        description: The module type
+        required: true
+        type: choice
+        default: 'plugin'
+        options:
+        - plugin
+        - theme
+
+jobs:
+  read_da:
+    name: Read DA repositories
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get user DA contributions
+        id: dialog
+        shell: php {0}
+        run: |
+          <?php
+          // authenticate to DA
+          echo "Authenticate to DA API\n";
+          $ch = curl_init();
+          curl_setopt_array($ch, [
+            CURLOPT_URL => '${{ inputs.api_url }}/auth',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => http_build_query([
+              'username' => '${{ secrets.DA_USERNAME }}',
+              'password' => '${{ secrets.DA_PASSWORD }}',
+            ]),
+          ]);
+          $rsp = json_decode((string) curl_exec($ch), true);
+          curl_close ($ch);
+          if (!is_array($rsp) || !isset($rsp['token'])) {
+            echo "Failed to get token\n";
+            file_put_contents(getenv('GITHUB_STEP_SUMMARY'), "Failed to get token\n");
+            return;
+          }
+          $token = $rsp['token'];
+
+          // Check latest contribution
+          echo "Get user DA contributions\n";
+          $ch = curl_init();
+          curl_setopt_array($ch, [
+            CURLOPT_URL => '${{ inputs.api_url }}/mine/${{ inputs.module_type }}',
+            CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $token],
+            CURLOPT_HEADER => false,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => [],
+          ]);
+          $rsp = json_decode((string) curl_exec($ch), true);
+          curl_close($ch);
+          if (!is_array($rsp)) {
+            echo "Failed to get latest contribution\n";
+            file_put_contents(getenv('GITHUB_STEP_SUMMARY'), "Failed to get latest contribution\n");
+            return;
+          }
+          $i = 0;
+          $res = [];
+          foreach($rsp as $module => $info) {
+            echo 'Found ' . $info['status'] . ' module ' . $module . ' ' . $info['version'] . "\n";
+            if ($info['status'] == 'approved') {
+              $ch = curl_init();
+              curl_setopt_array($ch, [
+                CURLOPT_URL => 'https://api.github.com/repos/${{ github.repository }}/actions/workflows/daupdate.yml/dispatches',
+                CURLOPT_HTTPHEADER => [
+                  'Accept: application/vnd.github.v3+json',
+                  'Authorization: Bearer ${{ secrets.USER_TOKEN }}',
+                  'User-Agent: ${{ github.repository_owner }}',
+                ],
+                CURLOPT_HEADER => false,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => json_encode([
+                  'ref' => 'master',
+                  'inputs' => [
+                    'api_url' => '${{ inputs.api_url }}',
+                    'module_type' => '${{ inputs.module_type }}',
+                    'module_id' => $module,
+                    'module_version' => $info['version'],
+                  ],
+                ]),
+              ]);
+              if (($rsp = curl_exec($ch)) === false) {
+                echo "Failed to launch DA update\n";
+              } else {
+                //echo 'Launch update of ${{ inputs.module_type }} ' . $module . ' ' .$info['version'] . " at ${{ inputs.api_url }} \n";
+                echo $rsp;
+                $i++;
+              }
+              curl_close($ch);
+            }
+          }
+          file_put_contents(getenv('GITHUB_STEP_SUMMARY'), "Found " . $i . " DA contributions to check.\n", FILE_APPEND);
