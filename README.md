@@ -1,6 +1,6 @@
 # README
 
-> Update DA repository contributions from github repository
+> Update DotAddict (DA) repository contributions from github repository
 
 These workflows allow you to update your Dotclear modules (plugins or themes)
 from your github modules repositories to your Dotaddict repository account.
@@ -31,11 +31,11 @@ Workflow is chunk in 3 parts:
 * daread.yml : Get user DA contributions and launch related update
 * daupdate.yml : Check and update DA contribution
 
-dalaunch.yml starts every day and launch daread.yml for plugins and for themes, daread.yml launch daupdate.yml for each founded DA modules.
+dalaunch.yml starts every day and launch daread.yml for plugins and for themes, daread.yml launch daupdate.yml for each DA modules found.
 
 ## LICENSE
 
-Copyright Olivier Meunier & Association Dotclear
+Copyright Jean-Christian Paul Denis
 
 AGPL-v3 <https://www.gnu.org/licenses/agpl-3.0.html>
 
