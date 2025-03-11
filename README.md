@@ -10,7 +10,7 @@ from your github modules repositories to your Dotaddict repository account.
 * You must have a valid DA console account
 * These workflows must be in same user repository as the ones to update
 * Modules repository must have same name as module
-* Modules releases must have their versions as tag
+* Modules releases must have their versions as tag prefixed with "v"
 * Modules releases must have attach zip file named type-module.zip
 
 ## SECRETS
