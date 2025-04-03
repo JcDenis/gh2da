@@ -41,12 +41,12 @@ jobs:
           ]);
           $rsp = json_decode((string) curl_exec($ch), true);
           curl_close ($ch);
-          if (!is_array($rsp) || !isset($rsp['token'])) {
+          if (!is_array($rsp) || !isset($rsp['content']['token'])) {
             echo "Failed to get token\n";
             file_put_contents(getenv('GITHUB_STEP_SUMMARY'), "Failed to get token\n");
             return;
           }
-          $token = $rsp['token'];
+          $token = $rsp['content']['token'];
 
           // Check latest contribution
           echo "Get user DA contributions\n";
@@ -61,14 +61,14 @@ jobs:
           ]);
           $rsp = json_decode((string) curl_exec($ch), true);
           curl_close($ch);
-          if (!is_array($rsp)) {
+          if (!is_array($rsp) || !isset($rsp['content'])) {
             echo "Failed to get latest contribution\n";
             file_put_contents(getenv('GITHUB_STEP_SUMMARY'), "Failed to get latest contribution\n");
             return;
           }
           $i = 0;
           $res = [];
-          foreach($rsp as $module => $info) {
+          foreach($rsp['content'] as $module => $info) {
             echo 'Found ' . $info['status'] . ' module ' . $module . ' ' . $info['version'] . "\n";
             if ($info['status'] == 'approved') {
               $ch = curl_init();
