@@ -6,7 +6,7 @@ on:
         description: The DA API URL
         required: true
         type: string
-        default: 'https://repo.dotclear.watch/console/api/v1'
+        default: 'https://repo.dotclear.watch/'
       module_type:
         description: The module type
         required: true
@@ -26,11 +26,12 @@ jobs:
         shell: php {0}
         run: |
           <?php
+          $api_url = '${{ inputs.api_url }}${{ inputs.module_type }}/api/v1/';
           // authenticate to DA
           echo "Authenticate to DA API\n";
           $ch = curl_init();
           curl_setopt_array($ch, [
-            CURLOPT_URL => '${{ inputs.api_url }}/auth',
+            CURLOPT_URL => $api_url . 'auth',
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => http_build_query([
@@ -51,7 +52,7 @@ jobs:
           echo "Get user DA contributions\n";
           $ch = curl_init();
           curl_setopt_array($ch, [
-            CURLOPT_URL => '${{ inputs.api_url }}/mine/${{ inputs.module_type }}',
+            CURLOPT_URL => $api_url . 'mine',
             CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $token],
             CURLOPT_HEADER => false,
             CURLOPT_RETURNTRANSFER => true,

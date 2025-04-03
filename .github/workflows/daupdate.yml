@@ -6,7 +6,7 @@ on:
         description: The repository URL
         required: true
         type: string
-        default: 'https://repo.dotclear.watch/console/api/v1'
+        default: 'https://repo.dotclear.watch/'
       module_type:
         description: The module type
         required: true
@@ -68,6 +68,7 @@ jobs:
         shell: php {0}
         run: |
           <?php
+          $api_url = '${{ inputs.api_url }}${{ inputs.module_type }}/api/v1/';
           // parse variables
           $type = '${{ inputs.module_type }}';
           $owner = '${{ github.repository_owner }}';
@@ -81,7 +82,7 @@ jobs:
           echo "Authenticate to DA API.\n";
           $ch = curl_init();
           curl_setopt_array($ch, [
-            CURLOPT_URL => '${{ inputs.api_url }}/auth',
+            CURLOPT_URL => $api_url  . 'auth',
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => http_build_query([
@@ -118,7 +119,7 @@ jobs:
           echo "Update DA contribution.\n";
           $ch = curl_init();
           curl_setopt_array($ch, [
-            CURLOPT_URL => '${{ inputs.api_url }}/update/${{ inputs.module_type }}',
+            CURLOPT_URL => $api_url . 'update',
             CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $token],
             CURLOPT_HEADER => false,
             CURLOPT_RETURNTRANSFER => true,

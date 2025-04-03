@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  API_URL: https://repo.dotclear.watch/console/api/v1
+  API_URL: https://repo.dotclear.watch/
 
 jobs:
   launch:
