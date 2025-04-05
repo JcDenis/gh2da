@@ -26,7 +26,7 @@ jobs:
         shell: php {0}
         run: |
           <?php
-          $api_url = '${{ inputs.api_url }}${{ inputs.module_type }}/api/v1/';
+          $api_url = '${{ inputs.api_url }}api/';
           // authenticate to DA
           echo "Authenticate to DA API\n";
           $ch = curl_init();
@@ -57,7 +57,9 @@ jobs:
             CURLOPT_HEADER => false,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => [],
+            CURLOPT_POSTFIELDS => [
+              'type' => '${{ inputs.module_type }}',
+            ],
           ]);
           $rsp = json_decode((string) curl_exec($ch), true);
           curl_close($ch);

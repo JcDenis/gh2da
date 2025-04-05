@@ -68,7 +68,7 @@ jobs:
         shell: php {0}
         run: |
           <?php
-          $api_url = '${{ inputs.api_url }}${{ inputs.module_type }}/api/v1/';
+          $api_url = '${{ inputs.api_url }}api/';
           // parse variables
           $type = '${{ inputs.module_type }}';
           $owner = '${{ github.repository_owner }}';
@@ -124,7 +124,10 @@ jobs:
             CURLOPT_HEADER => false,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => ['zip' => $zip_cnt],
+            CURLOPT_POSTFIELDS => [
+              'type' => '${{ inputs.module_type }}',
+              'zip'  => $zip_cnt
+            ],
           ]);
           $rsp = json_decode((string) curl_exec($ch), true);
           curl_close($ch);
