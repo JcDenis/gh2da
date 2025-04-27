@@ -72,8 +72,8 @@ jobs:
           $res = [];
           foreach($rsp['content'] as $module => $info) {
             sleep(2);
-            echo 'Found ' . $info['status'] . ' module ' . $module . ' ' . $info['version'] . "\n";
-            if ($info['status'] == 'approved') {
+            echo 'Found ' . $info['status_id'] . ' module ' . $module . ' ' . $info['version'] . "\n";
+            if ($info['status_id'] == 'approved') {
               $ch = curl_init();
               curl_setopt_array($ch, [
                 CURLOPT_URL => 'https://api.github.com/repos/${{ github.repository }}/actions/workflows/daupdate.yml/dispatches',
