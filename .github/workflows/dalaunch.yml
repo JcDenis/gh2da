@@ -1,12 +1,13 @@
 name: Launch
 
 on:
-  schedule:
-  - cron: '22 2 * * *'
   workflow_dispatch:
-
-env:
-  API_URL: https://repo.dotclear.watch/
+    inputs:
+      api_url:
+        description: The DA API URL
+        required: true
+        type: string
+        default: 'https://repo.dotclear.watch/'
 
 jobs:
   launch:
@@ -22,14 +23,14 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: Bearer ${{ secrets.USER_TOKEN }}" \
             https://api.github.com/repos/${{ github.repository }}/actions/workflows/daread.yml/dispatches \
-            -d '{"ref":"master","inputs":{"api_url":"${{ env.API_URL }}","module_type":"plugin"}}'
+            -d '{"ref":"master","inputs":{"api_url":"${{ inputs.api_url }}","module_type":"plugin"}}'
           echo "Launch themes update"
           curl \
             -X POST \
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: Bearer ${{ secrets.USER_TOKEN }}" \
             https://api.github.com/repos/${{ github.repository }}/actions/workflows/daread.yml/dispatches \
-            -d '{"ref":"master","inputs":{"api_url":"${{ env.API_URL }}","module_type":"theme"}}'
+            -d '{"ref":"master","inputs":{"api_url":"${{ inputs.api_url }}","module_type":"theme"}}'
 
       - name: Send Telegram Message Ok
         uses: appleboy/telegram-action@v1.0.0
@@ -39,4 +40,5 @@ jobs:
           format: markdown
           message: |
             __Dotaddict contribution update__
+            - ${{ inputs.api_url }}
             - Launch update workflows

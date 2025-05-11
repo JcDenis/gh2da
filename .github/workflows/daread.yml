@@ -71,7 +71,7 @@ jobs:
           $i = 0;
           $res = [];
           foreach($rsp['content'] as $module => $info) {
-            sleep(2);
+            sleep(5);
             echo 'Found ' . $info['status_id'] . ' module ' . $module . ' ' . $info['version'] . "\n";
             if ($info['status_id'] == 'approved') {
               $ch = curl_init();
