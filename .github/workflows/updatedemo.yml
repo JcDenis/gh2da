@@ -1,4 +1,4 @@
-name: Launch
+name: Update dcdemo
 
 on:
   schedule:

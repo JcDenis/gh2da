@@ -1,4 +1,4 @@
-name: Launch
+name: Upate dcwatch
 
 on:
   schedule:
