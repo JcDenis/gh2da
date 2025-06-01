@@ -126,7 +126,8 @@ jobs:
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => [
               'type' => '${{ inputs.module_type }}',
-              'zip'  => $zip_cnt
+              'zip' => $zip_cnt,
+              'readme_update' => '1',
             ],
           ]);
           $rsp = json_decode((string) curl_exec($ch), true);
