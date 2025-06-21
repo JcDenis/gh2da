@@ -38,6 +38,7 @@ jobs:
         uses: pozetroninc/github-action-get-latest-release@master
         with:
           repository: "${{ github.repository_owner }}/${{ inputs.module_id }}"
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Not found
         if: ${{ failure() }}
         id: notfound
