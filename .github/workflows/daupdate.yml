@@ -28,6 +28,7 @@ jobs:
   version:
     name: Check version
     runs-on: ubuntu-latest
+    continue-on-error: true
     outputs:
       local: ${{ steps.local.outputs.version }}
       newer: ${{ steps.compare.outputs.newer }}
@@ -37,7 +38,14 @@ jobs:
         uses: pozetroninc/github-action-get-latest-release@master
         with:
           repository: "${{ github.repository_owner }}/${{ inputs.module_id }}"
+      - name: Not found
+        if: ${{ failure() }}
+        id: notfound
+        run: |
+          echo '* ${{ inputs.module_id }} not found' >> $GITHUB_STEP_SUMMARY
+          exit 1
       - name: Parse local version
+        if: ${{ success() }}
         id: local
         run: |
           version="${{ steps.release.outputs.release }}"
@@ -45,6 +53,7 @@ jobs:
 
       - name: Compare version
         id: compare
+        if: ${{ success() }}
         run: |
           echo '* DA: ${{ inputs.module_version }}' >> $GITHUB_STEP_SUMMARY
           echo '* GH: ${{ steps.local.outputs.version }}' >> $GITHUB_STEP_SUMMARY
