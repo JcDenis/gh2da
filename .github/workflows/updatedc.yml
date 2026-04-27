@@ -1,4 +1,4 @@
-name: Update dcdemo
+name: Update dc
 
 on:
   schedule:
