@@ -6,6 +6,9 @@
 # - check:   PHP lint and PHPStan (level max with deprecation rules),
 #            against the Dotclear version required by the module
 #            (or Dotclear master on scheduled runs)
+# - test:    install Dotclear with docker-dotclear image (latest, or dev
+#            when the module needs Dotclear master), enable the module,
+#            browse admin and public pages and check PHP errors in logs
 # - prepare: on manual run with "release" checked, compute next version,
 #            update _define.php and CHANGELOG.md, commit "Release x"
 # - release: on commit "Release x" pushed to master (or after prepare),
@@ -47,6 +50,10 @@ jobs:
   check:
     if: ${{ !inputs.skip_checks }}
     runs-on: ubuntu-latest
+    outputs:
+      deps: ${{ steps.define.outputs.deps }}
+      type: ${{ steps.define.outputs.type }}
+      dcref: ${{ steps.dotclear.outputs.ref }}
     steps:
       - name: Checkout module
         uses: actions/checkout@v7
@@ -112,6 +119,7 @@ jobs:
           exit $errors
 
       - name: Get Dotclear
+        id: dotclear
         shell: bash
         env:
           DCMIN: ${{ steps.define.outputs.dcmin }}
@@ -122,6 +130,7 @@ jobs:
             [[ "$tag" != "" ]] && ref=$tag
           fi
           echo "Dotclear $ref"
+          echo "ref=$ref" >> $GITHUB_OUTPUT
           git clone -q --depth 1 --branch "$ref" https://github.com/dotclear/dotclear.git dotclear
 
       - name: Get dependencies
@@ -205,12 +214,150 @@ jobs:
           composer --working-dir=tools --quiet --no-interaction require phpstan/phpstan phpstan/phpstan-deprecation-rules
           php -d memory_limit=2G tools/vendor/bin/phpstan analyse --no-progress --error-format=github -c phpstan.neon
 
-  prepare:
+  test:
     needs: check
-    # run if checks succeeded or were skipped
+    if: ${{ needs.check.result == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      MODULE_ID: ${{ github.event.repository.name }}
+      MODULE_TYPE: ${{ needs.check.outputs.type }}
+      DC_USER: admin
+      DC_PASSWORD: Dotclear-CI-2026
+    steps:
+      - name: Checkout module
+        uses: actions/checkout@v7
+        with:
+          path: module
+
+      - name: Checkout test scripts
+        uses: actions/checkout@v7
+        with:
+          repository: JcDenis/gh2da
+          ref: master
+          path: gh2da
+          sparse-checkout: scripts
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: curl
+          coverage: none
+
+      - name: Start Dotclear
+        shell: bash
+        env:
+          DCREF: ${{ needs.check.outputs.dcref }}
+        run: |
+          # Image tag: dev (nightly) when module needs Dotclear master, else latest stable
+          tag=latest
+          [[ "$DCREF" == "master" ]] && tag=dev
+          echo "Image jcpd/docker-dotclear:$tag"
+          # Port 80: Dotclear builds redirections with the port seen in the container
+          docker run -d --name dotclear -p 80:80 jcpd/docker-dotclear:$tag
+          # Wait for first start (Dotclear files copied)
+          for i in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost/admin/" || true)
+            [[ "$code" == "200" || "$code" == "302" ]] && break
+            sleep 2
+          done
+          # PHP version of the image (ex: php85 from php-fpm85), add PHP CLI (not in image) for next steps
+          php=php$(docker exec dotclear sh -c 'ls /usr/sbin /usr/bin | grep -E "^php-fpm[0-9]+$" | sort -V | tail -1 | sed "s/php-fpm//"')
+          docker exec dotclear sh -c "command -v $php > /dev/null || apk add --no-cache -q $php"
+          echo "DC_PHP=$php" >> $GITHUB_ENV
+          docker exec dotclear sh -c "echo \"PHP \$($php -r 'echo PHP_VERSION;'), Dotclear \$(sed -n 's/.*release_version\": \"\(.*\)\",/\1/p' /var/www/dotclear/app/release.json)\""
+          # Log all PHP errors (stable images only log fatal errors), without displaying them
+          docker exec dotclear sh -c "printf 'error_reporting = E_ALL\nlog_errors = On\ndisplay_errors = Off\n' > /etc/$php/conf.d/zz-ci.ini && kill -USR2 \$(pgrep -o php-fpm)"
+          # Dotclear includes compiled templates with @, which hides PHP errors of public pages
+          docker exec dotclear sed -i 's/@include \$dest_file;/include $dest_file;/' /var/www/dotclear/app/src/Helper/Html/Template/Template.php
+
+      - name: Install Dotclear
+        shell: bash
+        run: |
+          install() { docker exec -u www -w /var/www/dotclear/app dotclear sh -c "$DC_PHP admin/install/index.php -n $1 < /dev/null"; echo; }
+          install "--dbdriver=pdosqlite --dbname=/var/www/dotclear/dotclear.sqlite --dbprefix=dc_ --adminemail=ci@example.org --adminurl=http://localhost/admin/"
+          install "--uemail=ci@example.org --ulogin=$DC_USER --upassword=$DC_PASSWORD --blogurl=http://localhost/default/"
+          docker exec dotclear test -f /var/www/dotclear/dotclear.sqlite || { echo "::error::Dotclear installation failed"; exit 1; }
+          docker cp gh2da/scripts/dotclear-db.php dotclear:/tmp/dotclear-db.php
+          # Blog URL in path info mode (installer can not know the host)
+          docker exec -u www dotclear $DC_PHP /tmp/dotclear-db.php /var/www/dotclear/dotclear.sqlite blogurl http://localhost/default/
+
+      - name: Install module and dependencies
+        shell: bash
+        env:
+          DEPS: ${{ needs.check.outputs.deps }}
+        run: |
+          copy() {
+            local dir=plugins
+            grep -qE "['\"]type['\"]\s*=>\s*['\"]theme['\"]" "$1/_define.php" 2> /dev/null && dir=themes
+            docker cp "$1" "dotclear:/var/www/dotclear/$dir/$2"
+          }
+          for dep in $DEPS; do
+            # Skip modules distributed with Dotclear
+            docker exec dotclear test -d "/var/www/dotclear/app/plugins/$dep" -o -d "/var/www/dotclear/app/themes/$dep" && continue
+            for owner in ${{ github.repository_owner }} franck-paul; do
+              if git clone -q --depth 1 "https://github.com/$owner/$dep.git" "deps/$dep" 2> /dev/null; then
+                rm -rf "deps/$dep/.git"
+                copy "deps/$dep" "$dep"
+                echo "Dependency $dep from $owner"
+                break
+              fi
+            done
+          done
+          rm -rf module/.git
+          copy module "$MODULE_ID"
+          docker exec dotclear chown -R www:www /var/www/dotclear/plugins /var/www/dotclear/themes
+          if [[ "$MODULE_TYPE" == "theme" ]]; then
+            docker exec -u www dotclear sh -c "$DC_PHP /tmp/dotclear-db.php /var/www/dotclear/dotclear.sqlite theme $MODULE_ID"
+          fi
+
+      - name: Browse pages
+        id: pages
+        shell: bash
+        run: |
+          export DC_ADMIN_URL="http://localhost/admin/"
+          export DC_BLOG_URL="http://localhost/default/"
+          export DC_POST_URL=$(docker exec -u www dotclear $DC_PHP /tmp/dotclear-db.php /var/www/dotclear/dotclear.sqlite posturl)
+          export MODULE_DIR=module OUT_DIR=pages
+          php gh2da/scripts/dotclear-test.php
+
+      - name: Check module is enabled
+        if: ${{ always() && steps.pages.outcome != 'skipped' }}
+        shell: bash
+        run: |
+          version=$(docker exec -u www dotclear sh -c "$DC_PHP /tmp/dotclear-db.php /var/www/dotclear/dotclear.sqlite version $MODULE_ID")
+          if [[ "$version" == "" ]]; then
+            echo "::error::Module $MODULE_ID is not enabled in Dotclear (missing dependency or error on load)"
+            exit 1
+          fi
+          echo "Module $MODULE_ID $version enabled"
+
+      - name: Check server logs
+        if: ${{ always() && steps.pages.outcome != 'skipped' }}
+        shell: bash
+        run: |
+          docker logs dotclear > php.log 2>&1
+          docker exec -u www dotclear $DC_PHP /tmp/dotclear-db.php /var/www/dotclear/dotclear.sqlite deprecated > deprecated.log || true
+          php gh2da/scripts/dotclear-test.php logs php.log deprecated.log
+
+      - name: Keep failing pages and logs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: dotclear-test
+          path: |
+            pages
+            php.log
+            deprecated.log
+          if-no-files-found: ignore
+
+  prepare:
+    needs: [check, test]
+    # run if checks and tests succeeded or were skipped
     if: >-
       ${{ always()
       && (needs.check.result == 'success' || needs.check.result == 'skipped')
+      && (needs.test.result == 'success' || needs.test.result == 'skipped')
       && inputs.release && github.event_name == 'workflow_dispatch'
       && github.ref_name == github.event.repository.default_branch
       }}
@@ -334,10 +481,11 @@ jobs:
             [Voir le détail](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
   release:
-    needs: [check, prepare]
+    needs: [check, test, prepare]
     if: >-
       ${{ always()
       && (needs.check.result == 'success' || needs.check.result == 'skipped')
+      && (needs.test.result == 'success' || needs.test.result == 'skipped')
       && (needs.prepare.result == 'success'
         || (github.event_name == 'push' && github.ref_name == github.event.repository.default_branch && startsWith(github.event.head_commit.message, 'release ')))
       }}
