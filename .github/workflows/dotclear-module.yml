@@ -118,7 +118,7 @@ jobs:
         run: |
           ref=master
           if [[ "${{ github.event_name }}" != "schedule" && "$DCMIN" != "" ]]; then
-            tag=$(git ls-remote --tags --refs https://github.com/dotclear/dotclear.git | sed 's#.*refs/tags/##' | grep -E "^${DCMIN//./\\.}(\.[0-9]+)*$" | sort -V | tail -1)
+            tag=$(git ls-remote --tags --refs https://github.com/dotclear/dotclear.git | sed 's#.*refs/tags/##' | grep -E "^${DCMIN//./\\.}(\.[0-9]+)*$" | sort -V | tail -1 || true)
             [[ "$tag" != "" ]] && ref=$tag
           fi
           echo "Dotclear $ref"
