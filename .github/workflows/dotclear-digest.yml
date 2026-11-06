@@ -1,7 +1,7 @@
 # Weekly Telegram digest of Dotclear modules
 #
 # Summarizes for all repositories of the owner using dotclear.yml workflow:
-# - last scheduled checks (against Dotclear master),
+# - last checks on default branch (weekly checks are against Dotclear master),
 # - releases published during the last 7 days.
 
 name: Dotclear modules digest
@@ -24,16 +24,17 @@ jobs:
           OWNER: ${{ github.repository_owner }}
         run: |
           since=$(date -u -d '7 days ago' +%Y-%m-%dT%H:%M:%SZ)
-          total=0; ok=0; failed=""; pending=""; releases=""
+          total=0; ok=0; failed=""; pending=0; releases=""
           for repo in $(gh api --paginate "users/$OWNER/repos?per_page=100&type=owner" --jq '.[] | select(.archived == false) | .name'); do
             # Only repositories using the Dotclear module workflow
             gh api "repos/$OWNER/$repo/contents/.github/workflows/dotclear.yml" --silent 2> /dev/null || continue
             total=$((total + 1))
-            run=$(gh api "repos/$OWNER/$repo/actions/workflows/dotclear.yml/runs?event=schedule&per_page=1" --jq '.workflow_runs[0] | "\(.conclusion // .status) \(.html_url)"' 2> /dev/null)
+            # Last completed run on default branch (weekly or push)
+            run=$(gh api "repos/$OWNER/$repo/actions/workflows/dotclear.yml/runs?branch=master&status=completed&per_page=1" --jq '.workflow_runs[0] | "\(.conclusion) \(.html_url)"' 2> /dev/null)
             case "${run%% *}" in
               success) ok=$((ok + 1)) ;;
               failure|timed_out|startup_failure) failed="$failed\n- [$repo](${run#* })" ;;
-              *) pending="$pending $repo" ;;
+              *) pending=$((pending + 1)) ;;
             esac
             rel=$(gh api "repos/$OWNER/$repo/releases?per_page=5" --jq ".[] | select(.published_at >= \"$since\") | .tag_name" 2> /dev/null | tr '\n' ' ')
             [[ "$rel" != "" ]] && releases="$releases\n- $repo ${rel% }"
@@ -43,9 +44,9 @@ jobs:
             echo "message<<DIGEST_EOF"
             echo "📋 *Résumé hebdomadaire des modules Dotclear*"
             echo ""
-            echo "Contrôles (Dotclear master) : $ok/$total OK"
+            echo "Contrôles du code : $ok/$total OK"
             [[ "$failed" != "" ]] && echo -e "❌ En échec :$failed"
-            [[ "$pending" != "" ]] && echo "⏳ Sans résultat :$pending"
+            [[ $pending -gt 0 ]] && echo "⏳ Sans résultat : $pending"
             echo ""
             if [[ "$releases" != "" ]]; then
               echo -e "🚀 Releases de la semaine :$releases"
