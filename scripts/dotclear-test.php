@@ -37,7 +37,7 @@ if (($argv[1] ?? '') === 'logs') {
     // PHP errors (same error is reported once)
     foreach (file((string) ($argv[2] ?? ''), FILE_IGNORE_NEW_LINES) ?: [] as $line) {
         if (preg_match('#PHP (Fatal error|Parse error|Recoverable fatal error|Warning|Notice|Deprecated):\s+(.*?) in (/\S+?)(?::| on line )(\d+)#', $line, $m)) {
-            $file = preg_replace('#^.*?/(plugins|themes)/#', '$1/', $m[3]);
+            $file = preg_replace(['#^.*?/(plugins|themes)/#', '#^/var/www/dotclear/app/#'], ['$1/', ''], $m[3]);
             $text = "PHP {$m[1]}: {$m[2]} in $file:{$m[4]}";
             if ($in_module($m[3])) {
                 $errors[$text] = $text;
