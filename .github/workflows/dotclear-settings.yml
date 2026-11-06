@@ -1,0 +1,69 @@
+# Apply same settings to all Dotclear modules repositories
+#
+# For all repositories of the owner using dotclear.yml workflow:
+# - add topics "dotclear" and "dotclear-plugin" (or "dotclear-theme"), keep others,
+# - delete head branches after pull request merge,
+# - disable projects, and wiki when it has no page.
+#
+# Requires secret USER_TOKEN with administration (write) permission on repositories.
+
+name: Dotclear modules settings
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Only show what would be changed'
+        type: boolean
+        default: true
+
+jobs:
+  settings:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Apply settings
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.USER_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          changed=0; errors=0
+          for repo in $(gh api --paginate "users/$OWNER/repos?per_page=100&type=owner" --jq '.[] | select(.archived == false) | .name'); do
+            gh api "repos/$OWNER/$repo/contents/.github/workflows/dotclear.yml" --silent 2> /dev/null || continue
+
+            info=$(gh api "repos/$OWNER/$repo")
+            type=plugin
+            gh api "repos/$OWNER/$repo/contents/_define.php" --jq '.content' | base64 -d | grep -qE "['\"]type['\"]\s*=>\s*['\"]theme['\"]" && type=theme
+
+            # Topics: add missing ones
+            topics=$(echo "$info" | jq -c --arg t "dotclear-$type" '(.topics + ["dotclear", $t]) | unique')
+            if [[ "$topics" != "$(echo "$info" | jq -c '.topics | unique')" ]]; then
+              echo "$repo: topics -> $topics"
+              if [[ "$DRY_RUN" != "true" ]]; then
+                echo "{\"names\": $topics}" | gh api -X PUT "repos/$OWNER/$repo/topics" --input - --silent || errors=$((errors + 1))
+              fi
+              changed=$((changed + 1))
+            fi
+
+            # Settings
+            args=()
+            [[ "$(echo "$info" | jq -r .delete_branch_on_merge)" == "false" ]] && args+=(-F delete_branch_on_merge=true)
+            [[ "$(echo "$info" | jq -r .has_projects)" == "true" ]] && args+=(-F has_projects=false)
+            if [[ "$(echo "$info" | jq -r .has_wiki)" == "true" ]]; then
+              if [[ "$(git ls-remote "https://x-access-token:$GH_TOKEN@github.com/$OWNER/$repo.wiki.git" 2> /dev/null | wc -l)" == "0" ]]; then
+                args+=(-F has_wiki=false)
+              else
+                echo "$repo: wiki has pages, kept"
+              fi
+            fi
+            if [[ ${#args[@]} -gt 0 ]]; then
+              echo "$repo: settings ${args[*]}"
+              if [[ "$DRY_RUN" != "true" ]]; then
+                gh api -X PATCH "repos/$OWNER/$repo" "${args[@]}" --silent || errors=$((errors + 1))
+              fi
+              changed=$((changed + 1))
+            fi
+          done
+          echo "Changes: $changed, errors: $errors (dry run: $DRY_RUN)"
+          [[ $errors -eq 0 ]]
