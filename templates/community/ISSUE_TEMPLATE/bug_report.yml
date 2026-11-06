@@ -1,0 +1,61 @@
+name: Bug report
+description: Something does not work as expected in a Dotclear module
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a problem. You can write in English or French.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to ...
+        2. Click on ...
+        3. See error
+  - type: input
+    id: module_version
+    attributes:
+      label: Module version
+      placeholder: ex. 2026.11.05 or 2.7
+    validations:
+      required: true
+  - type: input
+    id: dotclear_version
+    attributes:
+      label: Dotclear version
+      placeholder: ex. 2.39.3
+    validations:
+      required: true
+  - type: input
+    id: php_version
+    attributes:
+      label: PHP version
+      placeholder: ex. 8.3
+  - type: dropdown
+    id: database
+    attributes:
+      label: Database
+      options:
+        - MySQL / MariaDB
+        - PostgreSQL
+        - SQLite
+        - I don't know
+  - type: input
+    id: theme
+    attributes:
+      label: Blog theme
+      placeholder: ex. Berlin
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error messages or logs
+      render: text
