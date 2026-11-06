@@ -244,6 +244,7 @@ jobs:
         env:
           INPUT_VERSION: ${{ inputs.version }}
           MODULE_ID: ${{ github.event.repository.name }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           <?php
           date_default_timezone_set('Europe/Paris');
@@ -270,7 +271,14 @@ jobs:
             $fail("Invalid version $version");
           }
           if ($version === $current) {
-            $fail("Version $version is already the current version");
+            // Resume a failed release: current version without release yet
+            exec('gh release view ' . escapeshellarg('v' . $version) . ' --repo ' . escapeshellarg((string) getenv('GITHUB_REPOSITORY')) . ' > /dev/null 2>&1', $out, $code);
+            if ($code === 0) {
+              $fail("Release v$version already exists");
+            }
+            file_put_contents((string) getenv('GITHUB_OUTPUT'), "version=$version\ncommit=false\n", FILE_APPEND);
+            echo "Resume release of current version $version\n";
+            exit(0);
           }
 
           // Changes since last release
@@ -299,10 +307,11 @@ jobs:
           $define = preg_replace('/(registerModule\(.*?,.*?,.*?,\s*[\'"])' . preg_quote($current, '/') . '([\'"])/s', '${1}' . $version . '${2}', $define, 1);
           file_put_contents('_define.php', $define);
 
-          file_put_contents((string) getenv('GITHUB_OUTPUT'), "version=$version\n", FILE_APPEND);
+          file_put_contents((string) getenv('GITHUB_OUTPUT'), "version=$version\ncommit=true\n", FILE_APPEND);
           echo "Release $current -> $version\n\n$entry";
 
       - name: Commit release
+        if: ${{ steps.prepare.outputs.commit == 'true' }}
         shell: bash
         run: |
           if [[ "$HAS_GPG" != "true" ]]; then
@@ -365,7 +374,8 @@ jobs:
           }
           $type = preg_match('/[\'"]type[\'"]\s*=>\s*[\'"]theme[\'"]/', $define) ? 'theme' : 'plugin';
           // Version of commit message must match _define.php
-          if (preg_match('/registerModule\(.*?,.*?,.*?,\s*[\'"]([^\'"]+)[\'"]/s', $define, $m) && $m[1] !== $version) {
+          $str = '(?:\'(?:[^\'\\\\]|\\\\.)*\'|"(?:[^"\\\\]|\\\\.)*")';
+          if (preg_match('/registerModule\(\s*' . $str . '\s*,\s*' . $str . '\s*,\s*' . $str . '\s*,\s*[\'"]([^\'"]+)[\'"]/s', $define, $m) && $m[1] !== $version) {
             echo "::error::Version in commit message ($version) differs from version in _define.php ({$m[1]})\n";
             exit(1);
           }
