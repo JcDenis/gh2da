@@ -40,10 +40,18 @@ Reusable workflow `.github/workflows/dotclear-module.yml` does for each Dotclear
 * **checks** on push, pull request and weekly (monday) : PHP lint and PHPStan (level max with deprecation rules)
   against the Dotclear version required in `_define.php` (Dotclear master for the weekly run).
   Required plugins and plugins used in code are taken from same owner repositories, then from franck-paul ones.
+* **tests** after checks : a Dotclear site is started with the [docker-dotclear](https://github.com/JcDenis/docker-dotclear) image
+  (`latest`, or `dev` when the module needs Dotclear master and for the weekly run), the module and its dependencies are installed,
+  then admin pages (dashboard, settings, posts, media, widgets, module page and configuration...) and public pages
+  (home, post, archive, search, feeds, 404) are browsed. A page fails on HTTP status >= 500 or PHP error,
+  and PHP errors of server logs from module files fail the test (others are only warnings).
+  Extra pages can be listed in module file `.github/dotclear-test.txt`, one per line,
+  like `admin:index.php?process=Plugin&p=myModule&part=list` or `public:my-url/page`.
+  Summary is shown in the run page. Scripts are in `scripts/`.
 * **release button** : Actions > Dotclear module > Run workflow > check "Prepare and publish a release".
   Next version is today for date versions (2026.11.05), else increment after first dot (2.4.1 -> 2.5),
   or the given version. `_define.php` and `CHANGELOG.md` (commits since last release) are updated and committed as "Release x".
-* **release** on a commit "Release x" pushed on default branch (or after release button) : checks must pass,
+* **release** on a commit "Release x" pushed on default branch (or after release button) : checks and tests must pass,
   commit version must match `_define.php` version, then `_define.php` and `dcstore.xml` are updated
   and a release is created with the module zip.
 * **branches cleanup** on push to default branch : branches merged into default branch are deleted.
@@ -54,6 +62,11 @@ and secrets BOT_GPG_KEY, BOT_GPG_PASS, TELEGRAM_ID, TELEGRAM_TOKEN.
 
 Workflow `.github/workflows/dotclear-digest.yml` sends every monday a Telegram summary of all modules
 (weekly checks results and releases of the week).
+
+Workflow `.github/workflows/dotclear-settings.yml` applies same settings to all modules repositories
+(topics, delete branch on merge, no projects, no empty wiki), and `.github/workflows/dotclear-community.yml`
+publishes community health files of `templates/community/` (issue and pull request templates, contributing, security)
+to the owner `.github` repository. Both need secret USER_TOKEN.
 
 Dependabot keeps actions of these workflows up to date.
 
@@ -72,5 +85,6 @@ You should have received a copy of the GNU Affero General Public License along w
 ## CONTRIBUTORS
 
 * Jean-Christian Denis (author)
+* Claude (AI assistant by Anthropic)
 
 You are welcome to contribute to this code.
