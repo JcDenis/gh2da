@@ -6,6 +6,7 @@
  * Usage: php dotclear-db.php <database> <command> [argument]
  * - version <module>   : print installed version of a module (empty if not installed)
  * - theme <theme>      : use theme on default blog
+ * - blogurl <url>      : set URL of default blog (path info mode)
  * - posturl            : print URL of last published post of default blog
  * - deprecated         : print deprecated logs (one per line, traces separated by " | ")
  */
@@ -27,6 +28,13 @@ switch ($command) {
     case 'theme':
         $db->prepare("DELETE FROM dc_setting WHERE setting_ns = 'system' AND setting_id = 'theme' AND blog_id = 'default'")->execute();
         $db->prepare("INSERT INTO dc_setting (setting_id, blog_id, setting_ns, setting_value, setting_type, setting_label) VALUES ('theme', 'default', 'system', ?, 'string', 'Blog theme')")->execute([$argument]);
+
+        break;
+
+    case 'blogurl':
+        $db->prepare("UPDATE dc_blog SET blog_url = ? WHERE blog_id = 'default'")->execute([$argument]);
+        $db->prepare("DELETE FROM dc_setting WHERE setting_ns = 'system' AND setting_id = 'url_scan' AND blog_id = 'default'")->execute();
+        $db->prepare("INSERT INTO dc_setting (setting_id, blog_id, setting_ns, setting_value, setting_type, setting_label) VALUES ('url_scan', 'default', 'system', 'path_info', 'string', 'URL handle mode')")->execute();
 
         break;
 
