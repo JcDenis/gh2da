@@ -118,7 +118,9 @@ $check = function (string $label, string $url, array $post = []) use ($request, 
     if ($code === 0) {
         $errors[] = 'no response';
     } elseif ($code >= 500) {
-        $errors[] = "HTTP $code";
+        // Dotclear error page: keep its message
+        $text     = trim((string) preg_replace('/\s+/', ' ', strip_tags((string) preg_replace('#<(script|style|head)[^>]*>.*?</\1>#s', '', $body))));
+        $errors[] = "HTTP $code" . ($text !== '' ? ': ' . substr($text, 0, 300) : '');
     }
     // PHP errors displayed in page (display_errors on), with or without HTML
     if (preg_match_all('#(?:<b>)?(Fatal error|Parse error|Warning|Notice|Deprecated|Uncaught \w+)(?:</b>)?:\s+(.{0,300}?)(?: in (?:<b>)?(\S+?)(?:</b>)? on line (?:<b>)?(\d+))#s', $body, $matches, PREG_SET_ORDER)) {
