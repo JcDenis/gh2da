@@ -1,0 +1,65 @@
+# Weekly Telegram digest of Dotclear modules
+#
+# Summarizes for all repositories of the owner using dotclear.yml workflow:
+# - last scheduled checks (against Dotclear master),
+# - releases published during the last 7 days.
+
+name: Dotclear modules digest
+
+on:
+  schedule:
+    # Monday, after scheduled checks of modules (Monday 05:23 UTC)
+    - cron: '47 8 * * 1'
+  workflow_dispatch:
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Collect modules status
+        id: digest
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.USER_TOKEN || github.token }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          since=$(date -u -d '7 days ago' +%Y-%m-%dT%H:%M:%SZ)
+          total=0; ok=0; failed=""; pending=""; releases=""
+          for repo in $(gh api --paginate "users/$OWNER/repos?per_page=100&type=owner" --jq '.[] | select(.archived == false) | .name'); do
+            # Only repositories using the Dotclear module workflow
+            gh api "repos/$OWNER/$repo/contents/.github/workflows/dotclear.yml" --silent 2> /dev/null || continue
+            total=$((total + 1))
+            run=$(gh api "repos/$OWNER/$repo/actions/workflows/dotclear.yml/runs?event=schedule&per_page=1" --jq '.workflow_runs[0] | "\(.conclusion // .status) \(.html_url)"' 2> /dev/null)
+            case "${run%% *}" in
+              success) ok=$((ok + 1)) ;;
+              failure|timed_out|startup_failure) failed="$failed\n- [$repo](${run#* })" ;;
+              *) pending="$pending $repo" ;;
+            esac
+            rel=$(gh api "repos/$OWNER/$repo/releases?per_page=5" --jq ".[] | select(.published_at >= \"$since\") | .tag_name" 2> /dev/null | tr '\n' ' ')
+            [[ "$rel" != "" ]] && releases="$releases\n- $repo ${rel% }"
+          done
+
+          {
+            echo "message<<DIGEST_EOF"
+            echo "📋 *Résumé hebdomadaire des modules Dotclear*"
+            echo ""
+            echo "Contrôles (Dotclear master) : $ok/$total OK"
+            [[ "$failed" != "" ]] && echo -e "❌ En échec :$failed"
+            [[ "$pending" != "" ]] && echo "⏳ Sans résultat :$pending"
+            echo ""
+            if [[ "$releases" != "" ]]; then
+              echo -e "🚀 Releases de la semaine :$releases"
+            else
+              echo "Aucune release cette semaine."
+            fi
+            echo "DIGEST_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Send Telegram message
+        uses: appleboy/telegram-action@v1.1.1
+        with:
+          to: ${{ secrets.TELEGRAM_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
+          disable_web_page_preview: true
+          message: ${{ steps.digest.outputs.message }}

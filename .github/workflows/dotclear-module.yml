@@ -1,0 +1,541 @@
+# Reusable workflow for Dotclear modules (plugins and themes)
+#
+# Called from each module repository with a small caller workflow,
+# see README.md (section DOTCLEAR MODULE WORKFLOW).
+#
+# - check:   PHP lint and PHPStan (level max with deprecation rules),
+#            against the Dotclear version required by the module
+#            (or Dotclear master on scheduled runs)
+# - prepare: on manual run with "release" checked, compute next version,
+#            update _define.php and CHANGELOG.md, commit "Release x"
+# - release: on commit "Release x" pushed to master (or after prepare),
+#            update _define.php and dcstore.xml, create release with zip
+# - clean:   on push to master, delete branches merged into master
+#
+# Telegram messages (if secrets TELEGRAM_ID and TELEGRAM_TOKEN exist):
+# release published or failed, release preparation failed, branches deleted.
+# Scheduled checks are summarized weekly by dotclear-digest.yml.
+
+name: Dotclear module
+
+on:
+  workflow_call:
+    inputs:
+      release:
+        description: 'Prepare and publish a release'
+        type: boolean
+        default: false
+      version:
+        description: 'Release version (empty for automatic)'
+        type: string
+        default: ''
+      skip_checks:
+        description: 'Skip code checks'
+        type: boolean
+        default: false
+    secrets:
+      BOT_GPG_KEY:
+        required: false
+      BOT_GPG_PASS:
+        required: false
+      TELEGRAM_ID:
+        required: false
+      TELEGRAM_TOKEN:
+        required: false
+
+jobs:
+  check:
+    if: ${{ !inputs.skip_checks }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout module
+        uses: actions/checkout@v7
+        with:
+          path: module
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer
+          coverage: none
+
+      - name: Read module definition
+        id: define
+        shell: php {0}
+        env:
+          MODULE_ID: ${{ github.event.repository.name }}
+        run: |
+          <?php
+          $define = (string) @file_get_contents('module/_define.php');
+          $id     = (string) getenv('MODULE_ID');
+          $dcmin  = '';
+          $deps   = [];
+          // Extract requires array (balanced brackets, may be multiline with comments)
+          $requires = '';
+          if (preg_match('/[\'"]requires[\'"]\s*=>\s*\[/', $define, $m, PREG_OFFSET_CAPTURE)) {
+            $start = $m[0][1] + strlen($m[0][0]);
+            $depth = 1;
+            for ($i = $start; $i < strlen($define) && $depth > 0; $i++) {
+              $depth += $define[$i] === '[' ? 1 : ($define[$i] === ']' ? -1 : 0);
+            }
+            $requires = preg_replace('#//[^\n]*#', '', substr($define, $start, $i - $start - 1));
+          }
+          preg_match_all('/\[\s*[\'"]([A-Za-z0-9_]+)[\'"]\s*(?:,\s*[\'"]([0-9.]+)[\'"])?\s*\]/', (string) $requires, $reqs, PREG_SET_ORDER);
+          foreach ($reqs as $req) {
+            if ($req[1] === 'core') {
+              $dcmin = $req[2] ?? '';
+            } elseif ($req[1] !== 'php') {
+              $deps[] = $req[1];
+            }
+          }
+          // Other plugins used in code (ex: activityReport)
+          $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator('module', FilesystemIterator::SKIP_DOTS));
+          foreach ($files as $file) {
+            if ($file->getExtension() === 'php' && !str_contains($file->getPathname(), '/vendor/')) {
+              preg_match_all('/Dotclear\\\\(?:Plugin|Theme)\\\\([A-Za-z0-9_]+)\\\\/', (string) file_get_contents($file->getPathname()), $uses);
+              $deps = array_merge($deps, $uses[1]);
+            }
+          }
+          $deps = array_values(array_unique(array_filter($deps, fn ($d) => strcasecmp($d, $id) !== 0)));
+          $type = preg_match('/[\'"]type[\'"]\s*=>\s*[\'"]theme[\'"]/', $define) ? 'theme' : 'plugin';
+          file_put_contents((string) getenv('GITHUB_OUTPUT'), "dcmin=$dcmin\ndeps=" . implode(' ', $deps) . "\ntype=$type\n", FILE_APPEND);
+          echo "Module: $id ($type), Dotclear: $dcmin, dependencies: " . implode(', ', $deps) . "\n";
+
+      - name: Lint PHP files
+        shell: bash
+        run: |
+          errors=0
+          while IFS= read -r -d '' file; do
+            php -l "$file" > /dev/null || errors=1
+          done < <(find module -name '*.php' -not -path '*/vendor/*' -print0)
+          exit $errors
+
+      - name: Get Dotclear
+        shell: bash
+        env:
+          DCMIN: ${{ steps.define.outputs.dcmin }}
+        run: |
+          ref=master
+          if [[ "${{ github.event_name }}" != "schedule" && "$DCMIN" != "" ]]; then
+            tag=$(git ls-remote --tags --refs https://github.com/dotclear/dotclear.git | sed 's#.*refs/tags/##' | grep -E "^${DCMIN//./\\.}(\.[0-9]+)*$" | sort -V | tail -1)
+            [[ "$tag" != "" ]] && ref=$tag
+          fi
+          echo "Dotclear $ref"
+          git clone -q --depth 1 --branch "$ref" https://github.com/dotclear/dotclear.git dotclear
+
+      - name: Get dependencies
+        shell: bash
+        env:
+          DEPS: ${{ steps.define.outputs.deps }}
+        run: |
+          mkdir -p deps
+          for dep in $DEPS; do
+            if [[ -d "dotclear/plugins/$dep" || -d "dotclear/themes/$dep" ]]; then
+              continue
+            fi
+            for owner in ${{ github.repository_owner }} franck-paul; do
+              if git clone -q --depth 1 "https://github.com/$owner/$dep.git" "deps/$dep" 2> /dev/null; then
+                echo "Dependency $dep from $owner"
+                break
+              fi
+            done
+            [[ -d "deps/$dep" ]] || echo "::warning::Dependency $dep not found"
+          done
+
+      - name: Write PHPStan configuration
+        shell: php {0}
+        run: |
+          <?php
+          $exists = fn (string $path): bool => file_exists($path);
+          $list   = fn (array $items): string => implode('', array_map(fn (string $i): string => "    - $i\n", $items));
+          $scan   = array_filter(['dotclear/src', 'dotclear/plugins', 'dotclear/inc'], $exists);
+          foreach (glob('deps/*', GLOB_ONLYDIR) ?: [] as $dep) {
+            $scan[] = is_dir("$dep/src") ? "$dep/src" : $dep;
+          }
+          // Other module directories with PHP files (ex: lib, inc)
+          foreach (glob('module/*', GLOB_ONLYDIR) ?: [] as $dir) {
+            if (in_array(basename($dir), ['src', 'locales', 'default-templates', 'js', 'css', 'img', 'tpl'], true)) {
+              continue;
+            }
+            foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS)) as $file) {
+              if ($file->getExtension() === 'php') {
+                $scan[] = $dir;
+
+                break;
+              }
+            }
+          }
+          $paths = array_filter(['module/src', 'module/_define.php'], $exists);
+          $neon  = "includes:\n  - tools/vendor/phpstan/phpstan-deprecation-rules/rules.neon\n"
+            . "parameters:\n"
+            . "  level: max\n"
+            . "  checkBenevolentUnionTypes: true\n"
+            . "  checkDynamicProperties: true\n"
+            . "  checkExplicitMixedMissingReturn: true\n"
+            . "  checkFunctionNameCase: true\n"
+            . "  reportAlwaysTrueInLastCondition: true\n"
+            . "  reportWrongPhpDocTypeInVarTag: true\n"
+            . "  reportUnmatchedIgnoredErrors: false\n"
+            . ($exists('dotclear/phpstan.bootstrap') ? "  bootstrapFiles:\n" . $list(['dotclear/phpstan.bootstrap']) : '')
+            . "  scanFiles:\n" . $list(['dotclear/index.php'])
+            . "  scanDirectories:\n" . $list($scan)
+            . "  paths:\n" . $list($paths)
+            . ($exists('dotclear/stubs/MetaRecord.stub') ? "  stubFiles:\n" . $list(['dotclear/stubs/MetaRecord.stub']) : '')
+            . "  universalObjectCratesClasses:\n" . $list([
+              'Dotclear\\Core\\Backend\\Filter\\FilterPosts',
+              'Dotclear\\Core\\Backend\\Utility',
+              'Dotclear\\Core\\Frontend\\Ctx',
+              'Dotclear\\Database\\Cursor',
+              'Dotclear\\Database\\Record',
+              'Dotclear\\Helper\\Html\\XmlTag',
+              'Dotclear\\Helper\\Stack\\Filter',
+            ])
+            . "  ignoreErrors:\n"
+            . '    - message: \'#Variable \$this might not be defined#\'' . "\n"
+            . '    - message: \'#Cannot call method registerModule\(\) on mixed#\'' . "\n"
+            . '    - message: \'#Call to an undefined method Dotclear\\\\Helper\\\\Html\\\\XmlTag::#\'' . "\n";
+          file_put_contents('phpstan.neon', $neon);
+          echo $neon;
+
+      - name: Run PHPStan
+        shell: bash
+        run: |
+          mkdir -p tools
+          composer --working-dir=tools --quiet --no-interaction require phpstan/phpstan phpstan/phpstan-deprecation-rules
+          php -d memory_limit=2G tools/vendor/bin/phpstan analyse --no-progress --error-format=github -c phpstan.neon
+
+  prepare:
+    needs: check
+    # run if checks succeeded or were skipped
+    if: >-
+      ${{ always()
+      && (needs.check.result == 'success' || needs.check.result == 'skipped')
+      && inputs.release && github.event_name == 'workflow_dispatch'
+      && github.ref_name == github.event.repository.default_branch
+      }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      HAS_GPG: ${{ secrets.BOT_GPG_KEY != '' }}
+      HAS_TELEGRAM: ${{ secrets.TELEGRAM_TOKEN != '' }}
+    outputs:
+      version: ${{ steps.prepare.outputs.version }}
+    steps:
+      - name: Checkout module
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Import GPG key
+        if: ${{ env.HAS_GPG == 'true' }}
+        uses: crazy-max/ghaction-import-gpg@v7
+        with:
+          gpg_private_key: ${{ secrets.BOT_GPG_KEY }}
+          passphrase: ${{ secrets.BOT_GPG_PASS }}
+          git_config_global: true
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+
+      - name: Compute version and update files
+        id: prepare
+        shell: php {0}
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          MODULE_ID: ${{ github.event.repository.name }}
+        run: |
+          <?php
+          date_default_timezone_set('Europe/Paris');
+          $fail = function (string $msg): never { echo "::error::$msg\n"; exit(1); };
+
+          // Current version
+          $define = (string) file_get_contents('_define.php');
+          if (!preg_match('/registerModule\(\s*(?:\'(?:[^\'\\\\]|\\\\.)*\'|"(?:[^"\\\\]|\\\\.)*")\s*,\s*(?:\'(?:[^\'\\\\]|\\\\.)*\'|"(?:[^"\\\\]|\\\\.)*")\s*,\s*(?:\'(?:[^\'\\\\]|\\\\.)*\'|"(?:[^"\\\\]|\\\\.)*")\s*,\s*[\'"]([^\'"]+)[\'"]/s', $define, $m)) {
+            $fail('Version not found in _define.php');
+          }
+          $current = $m[1];
+
+          // Next version: given, today for date versions, else increment after first dot
+          $version = trim((string) getenv('INPUT_VERSION'));
+          if ($version === '') {
+            if (preg_match('/^\d{4}\.\d{2}\.\d{2}$/', $current)) {
+              $version = date('Y.m.d');
+            } else {
+              $parts   = explode('.', $current);
+              $version = $parts[0] . '.' . ((int) ($parts[1] ?? 0) + 1);
+            }
+          }
+          if (!preg_match('/^[0-9][0-9A-Za-z.\-]*$/', $version)) {
+            $fail("Invalid version $version");
+          }
+          if ($version === $current) {
+            $fail("Version $version is already the current version");
+          }
+
+          // Changes since last release
+          $last = trim((string) shell_exec("git log --format=%H -i --grep='^release ' -1"));
+          $range = $last !== '' ? escapeshellarg($last . '..HEAD') : 'HEAD';
+          $subjects = array_filter(explode("\n", (string) shell_exec("git log --reverse --no-merges --format=%s $range")), fn (string $s): bool =>
+            trim($s) !== '' && !preg_match('/^(Update (_define\.php|dcstore\.xml) for release|Update release workflow|Add workflow to delete merged branches|Use central Dotclear module workflow)/', $s));
+          if ($subjects === []) {
+            $fail('Nothing to release since last release');
+          }
+
+          // CHANGELOG.md
+          $changelog = file_exists('CHANGELOG.md') ? (string) file_get_contents('CHANGELOG.md') : '';
+          $name      = preg_match('/^(\S+) \d[\d.]*( - |\s*$)/m', $changelog, $h) ? $h[1] : (string) getenv('MODULE_ID');
+          $header    = $name . ' ' . $version . (preg_match('/^\d{4}\.\d{2}\.\d{2}$/', $version) ? '' : ' - ' . date('Y.m.d'));
+          $entry     = $header . "\n" . str_repeat('=', 59) . "\n" . implode('', array_map(fn (string $s): string => '* ' . $s . "\n", $subjects)) . "\n";
+          if (str_starts_with($changelog, 'TODO')) {
+            $pos       = strpos($changelog, "\n\n");
+            $changelog = $pos === false ? $changelog . "\n\n" . $entry : substr($changelog, 0, $pos + 2) . $entry . substr($changelog, $pos + 2);
+          } else {
+            $changelog = $entry . ltrim($changelog, "\n");
+          }
+          file_put_contents('CHANGELOG.md', $changelog);
+
+          // _define.php
+          $define = preg_replace('/(registerModule\(.*?,.*?,.*?,\s*[\'"])' . preg_quote($current, '/') . '([\'"])/s', '${1}' . $version . '${2}', $define, 1);
+          file_put_contents('_define.php', $define);
+
+          file_put_contents((string) getenv('GITHUB_OUTPUT'), "version=$version\n", FILE_APPEND);
+          echo "Release $current -> $version\n\n$entry";
+
+      - name: Commit release
+        shell: bash
+        run: |
+          if [[ "$HAS_GPG" != "true" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          fi
+          git add _define.php CHANGELOG.md
+          git commit -m "Release ${{ steps.prepare.outputs.version }}"
+          git push
+
+      - name: Send Telegram message on failure
+        if: ${{ failure() && env.HAS_TELEGRAM == 'true' }}
+        uses: appleboy/telegram-action@v1.1.1
+        with:
+          to: ${{ secrets.TELEGRAM_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
+          message: |
+            ❌ *${{ github.event.repository.name }}* : échec de la préparation de la release
+            [Voir le détail](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+  release:
+    needs: [check, prepare]
+    if: >-
+      ${{ always()
+      && (needs.check.result == 'success' || needs.check.result == 'skipped')
+      && (needs.prepare.result == 'success'
+        || (github.event_name == 'push' && github.ref_name == github.event.repository.default_branch && startsWith(github.event.head_commit.message, 'release ')))
+      }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: release-${{ github.repository }}
+    env:
+      HAS_GPG: ${{ secrets.BOT_GPG_KEY != '' }}
+      HAS_TELEGRAM: ${{ secrets.TELEGRAM_TOKEN != '' }}
+    steps:
+      - name: Checkout module
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Read release version
+        id: dotclear
+        shell: php {0}
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          PREPARED_VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          <?php
+          $version = trim((string) getenv('PREPARED_VERSION'));
+          if ($version === '') {
+            $version = trim(substr(strtok((string) getenv('COMMIT_MESSAGE'), "\n"), 8));
+          }
+          $define = (string) file_get_contents('_define.php');
+          $dcmin  = '';
+          if (preg_match('/\[\s*[\'"]core[\'"]\s*,\s*[\'"]([0-9.]+)[\'"]/', $define, $m)) {
+            $dcmin = $m[1];
+          }
+          $type = preg_match('/[\'"]type[\'"]\s*=>\s*[\'"]theme[\'"]/', $define) ? 'theme' : 'plugin';
+          // Version of commit message must match _define.php
+          if (preg_match('/registerModule\(.*?,.*?,.*?,\s*[\'"]([^\'"]+)[\'"]/s', $define, $m) && $m[1] !== $version) {
+            echo "::error::Version in commit message ($version) differs from version in _define.php ({$m[1]})\n";
+            exit(1);
+          }
+          file_put_contents((string) getenv('GITHUB_OUTPUT'), "version=$version\ndcmin=$dcmin\ntype=$type\n", FILE_APPEND);
+
+      - name: Check repository releases
+        id: repository
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ "${{ steps.dotclear.outputs.version }}" == "" ]]; then
+            echo "::error::No version found"
+            exit 1
+          elif gh release view "v${{ steps.dotclear.outputs.version }}" --repo "${{ github.repository }}" > /dev/null 2>&1; then
+            echo "::error::Release v${{ steps.dotclear.outputs.version }} already exists"
+            exit 1
+          fi
+          echo "repository-name=${{ github.event.repository.name }}" >> $GITHUB_OUTPUT
+          echo "download-url=https://github.com/${{ github.repository }}/releases/download/v${{ steps.dotclear.outputs.version }}/${{ steps.dotclear.outputs.type }}-${{ github.event.repository.name }}.zip" >> $GITHUB_OUTPUT
+
+      - name: Import GPG key
+        if: ${{ env.HAS_GPG == 'true' }}
+        uses: crazy-max/ghaction-import-gpg@v7
+        with:
+          gpg_private_key: ${{ secrets.BOT_GPG_KEY }}
+          passphrase: ${{ secrets.BOT_GPG_PASS }}
+          git_config_global: true
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+
+      # Parser from https://github.com/franck-paul
+      - name: Update version and date
+        shell: php {0}
+        env:
+          VERSION: ${{ steps.dotclear.outputs.version }}
+          DCMIN: ${{ steps.dotclear.outputs.dcmin }}
+          DOWNLOAD_URL: ${{ steps.repository.outputs.download-url }}
+        run: |
+          <?php
+          $version = (string) getenv('VERSION');
+          $date    = date('c');
+          if (file_exists('_define.php')) {
+            $ds = file_get_contents('_define.php');
+            if ($ds) {
+              $ds = preg_replace('/^(.*registerModule\(.*?,.*?[\'\"],.*?[\'\"],.*?)([\'\"].*?[\'\"])(.*?,.*\).*)$/s', "$1'" . $version . "'$3", $ds);
+              $ds = preg_replace('/(\'date\'\s+=>\s)(\'.*?\')/s', "$1'" . $date . "'", $ds);
+              if ($ds) {
+                file_put_contents('_define.php', $ds);
+              }
+            }
+          }
+          if (file_exists('dcstore.xml')) {
+            $ds = file_get_contents('dcstore.xml');
+            if ($ds) {
+              $ds = preg_replace('/<version>(.*?)<\/version>/s', '<version>' . $version . '</version>', $ds);
+              $ds = preg_replace('/<file>(.*?)<\/file>/s', '<file>' . getenv('DOWNLOAD_URL') . '</file>', $ds);
+              $ds = preg_replace('/<date>(.*?)<\/date>/s', '<date>' . $date . '</date>', $ds);
+              if (getenv('DCMIN') !== '') {
+                $ds = preg_replace('/<da:dcmin>(.*?)<\/da:dcmin>/s', '<da:dcmin>' . getenv('DCMIN') . '</da:dcmin>', $ds);
+              }
+              if ($ds) {
+                file_put_contents('dcstore.xml', $ds);
+              }
+            }
+          }
+
+      - name: Write files
+        shell: bash
+        run: |
+          if [[ "$HAS_GPG" != "true" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          fi
+          for file in _define.php dcstore.xml; do
+            if [[ -f $file && "$(git diff --name-only -- $file)" != "" ]]; then
+              echo "$file modified, need to be commit"
+              git add $file
+              git commit -m "Update $file for release"
+              git push
+            else
+              echo "$file not modified"
+            fi
+          done
+
+      - name: Create archive
+        uses: thedoctor0/zip-release@0.7.6
+        with:
+          type: 'zip'
+          directory: ..
+          path: '${{ steps.repository.outputs.repository-name }}'
+          filename: '${{ steps.dotclear.outputs.type }}-${{ steps.repository.outputs.repository-name }}.zip'
+          exclusions: '*.git* /*node_modules/* .editorconfig'
+
+      - name: Create release with archive
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: '../${{ steps.dotclear.outputs.type }}-${{ steps.repository.outputs.repository-name }}.zip'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generateReleaseNotes: true
+          name: ${{ steps.repository.outputs.repository-name }} ${{ steps.dotclear.outputs.version }}
+          tag: 'v${{ steps.dotclear.outputs.version }}'
+
+      - name: Send Telegram message
+        if: ${{ env.HAS_TELEGRAM == 'true' }}
+        uses: appleboy/telegram-action@v1.1.1
+        with:
+          to: ${{ secrets.TELEGRAM_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
+          message: |
+            🚀 *${{ steps.repository.outputs.repository-name }} ${{ steps.dotclear.outputs.version }}* publié
+            - Déclenché par : ${{ github.event_name == 'workflow_dispatch' && 'bouton Release' || 'commit Release' }}
+            - [Release](${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ steps.dotclear.outputs.version }}) - [Archive](${{ steps.repository.outputs.download-url }})
+
+      - name: Send Telegram message on failure
+        if: ${{ failure() && env.HAS_TELEGRAM == 'true' }}
+        uses: appleboy/telegram-action@v1.1.1
+        with:
+          to: ${{ secrets.TELEGRAM_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
+          message: |
+            ❌ *${{ github.event.repository.name }}* : échec de la release ${{ steps.dotclear.outputs.version }}
+            [Voir le détail](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+  clean:
+    if: ${{ github.event_name == 'push' && github.ref_name == github.event.repository.default_branch }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      HAS_TELEGRAM: ${{ secrets.TELEGRAM_TOKEN != '' }}
+    steps:
+      - name: Checkout module
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Delete branches merged into default branch
+        id: clean
+        shell: bash
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          git fetch --prune origin '+refs/heads/*:refs/remotes/origin/*'
+          head=$(git rev-parse "origin/$DEFAULT_BRANCH")
+          for ref in $(git for-each-ref --format='%(refname:short)' --merged "origin/$DEFAULT_BRANCH" refs/remotes/origin); do
+            branch=${ref#origin/}
+            case "$branch" in "$DEFAULT_BRANCH"|master|main|HEAD|origin) continue ;; esac
+            # Skip branches just created from default branch (nothing merged yet)
+            if [[ "$(git rev-parse "$ref")" == "$head" ]]; then
+              echo "Keep branch $branch (same as $DEFAULT_BRANCH)"
+              continue
+            fi
+            echo "Delete branch $branch"
+            git push origin --delete "$branch" && deleted="$deleted $branch"
+          done
+          echo "deleted=${deleted# }" >> $GITHUB_OUTPUT
+
+      - name: Send Telegram message
+        if: ${{ steps.clean.outputs.deleted != '' && env.HAS_TELEGRAM == 'true' }}
+        uses: appleboy/telegram-action@v1.1.1
+        with:
+          to: ${{ secrets.TELEGRAM_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
+          message: |
+            🧹 *${{ github.event.repository.name }}* : branches fusionnées supprimées
+            ${{ steps.clean.outputs.deleted }}

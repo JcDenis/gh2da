@@ -1,0 +1,7 @@
+# Keep GitHub actions up to date (used by all Dotclear modules through dotclear-module.yml)
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
