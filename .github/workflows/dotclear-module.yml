@@ -53,7 +53,8 @@ jobs:
     outputs:
       deps: ${{ steps.define.outputs.deps }}
       type: ${{ steps.define.outputs.type }}
-      dcref: ${{ steps.dotclear.outputs.ref }}
+      dcref: ${{ steps.dcdeps.outputs.ref || steps.dotclear.outputs.ref }}
+      disabled: ${{ steps.define.outputs.disabled }}
     steps:
       - name: Checkout module
         uses: actions/checkout@v7
@@ -106,7 +107,9 @@ jobs:
           }
           $deps = array_values(array_unique(array_filter($deps, fn ($d) => strcasecmp($d, $id) !== 0)));
           $type = preg_match('/[\'"]type[\'"]\s*=>\s*[\'"]theme[\'"]/', $define) ? 'theme' : 'plugin';
-          file_put_contents((string) getenv('GITHUB_OUTPUT'), "dcmin=$dcmin\ndeps=" . implode(' ', $deps) . "\ntype=$type\n", FILE_APPEND);
+          // Module disabled on purpose (ex: empty module template)
+          $disabled = file_exists('module/_disabled') ? 'true' : 'false';
+          file_put_contents((string) getenv('GITHUB_OUTPUT'), "dcmin=$dcmin\ndeps=" . implode(' ', $deps) . "\ntype=$type\ndisabled=$disabled\n", FILE_APPEND);
           echo "Module: $id ($type), Dotclear: $dcmin, dependencies: " . implode(', ', $deps) . "\n";
 
       - name: Lint PHP files
@@ -151,6 +154,32 @@ jobs:
             done
             [[ -d "deps/$dep" ]] || echo "::warning::Dependency $dep not found"
           done
+
+      - name: Use Dotclear version required by dependencies
+        id: dcdeps
+        shell: bash
+        env:
+          DCMIN: ${{ steps.define.outputs.dcmin }}
+          DCREF: ${{ steps.dotclear.outputs.ref }}
+        run: |
+          # A dependency may require a newer Dotclear than the module (ex: FrontendSession)
+          max=$DCMIN
+          for define in deps/*/_define.php; do
+            [[ -f "$define" ]] || continue
+            dep=$(grep -oE "\[\s*['\"]core['\"]\s*,\s*['\"][0-9.]+['\"]" "$define" | grep -oE "[0-9]+(\.[0-9]+)+" || true)
+            if [[ "$dep" != "" && "$(printf '%s\n%s\n' "$max" "$dep" | sort -V | tail -1)" != "$max" ]]; then
+              echo "Dependency $(basename $(dirname $define)) requires Dotclear $dep"
+              max=$dep
+            fi
+          done
+          if [[ "$max" != "$DCMIN" && "$DCREF" != "master" ]]; then
+            ref=$(git ls-remote --tags --refs https://github.com/dotclear/dotclear.git | sed 's#.*refs/tags/##' | grep -E "^${max//./\\.}(\.[0-9]+)*$" | sort -V | tail -1 || true)
+            [[ "$ref" == "" ]] && ref=master
+            echo "Dotclear $ref (instead of $DCREF)"
+            rm -rf dotclear
+            git clone -q --depth 1 --branch "$ref" https://github.com/dotclear/dotclear.git dotclear
+            echo "ref=$ref" >> $GITHUB_OUTPUT
+          fi
 
       - name: Write PHPStan configuration
         shell: php {0}
@@ -216,7 +245,8 @@ jobs:
 
   test:
     needs: check
-    if: ${{ needs.check.result == 'success' }}
+    # modules with a _disabled file (ex: empty templates) are not tested
+    if: ${{ needs.check.result == 'success' && needs.check.outputs.disabled != 'true' }}
     runs-on: ubuntu-latest
     env:
       MODULE_ID: ${{ github.event.repository.name }}
