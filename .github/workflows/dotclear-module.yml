@@ -254,7 +254,9 @@ jobs:
           [[ "$DCREF" == "master" ]] && tag=dev
           echo "Image jcpd/docker-dotclear:$tag"
           # Port 80: Dotclear builds redirections with the port seen in the container
-          docker run -d --name dotclear -p 80:80 jcpd/docker-dotclear:$tag
+          docker run -d --name dotclear -p 80:80 \
+            -e DC_DBDRIVER=pdosqlite -e DC_DBNAME=/var/www/dotclear/dotclear.sqlite -e DC_DBPREFIX=dc_ -e DC_ADMINMAILFROM=ci@example.org \
+            jcpd/docker-dotclear:$tag
           # Wait for first start (Dotclear files copied)
           for i in $(seq 1 60); do
             code=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost/admin/" || true)
@@ -275,7 +277,13 @@ jobs:
         shell: bash
         run: |
           install() { docker exec -u www -w /var/www/dotclear/app dotclear sh -c "$DC_PHP admin/install/index.php -n $1 < /dev/null"; echo; }
-          install "--dbdriver=pdosqlite --dbname=/var/www/dotclear/dotclear.sqlite --dbprefix=dc_ --adminemail=ci@example.org --adminurl=http://localhost/admin/"
+          # First step (configuration file) by the web wizard, from DC_DB* variables (as docker-dotclear does)
+          curl -s -L -o wizard.html "http://localhost/admin/install/index.php" || true
+          if ! docker exec dotclear test -f /var/www/dotclear/config.php; then
+            echo "::error::Dotclear configuration failed: $(php -r 'echo substr(trim(preg_replace("/\s+/", " ", strip_tags(preg_replace("#<(head|style|script)[^>]*>.*?</\\1>#s", "", (string) file_get_contents("wizard.html"))))), 0, 500);')"
+            exit 1
+          fi
+          # Second step (database and super admin) by command line
           install "--uemail=ci@example.org --ulogin=$DC_USER --upassword=$DC_PASSWORD --blogurl=http://localhost/default/"
           docker exec dotclear test -f /var/www/dotclear/dotclear.sqlite || { echo "::error::Dotclear installation failed"; exit 1; }
           docker cp gh2da/scripts/dotclear-db.php dotclear:/tmp/dotclear-db.php
@@ -325,6 +333,15 @@ jobs:
         if: ${{ always() && steps.pages.outcome != 'skipped' }}
         shell: bash
         run: |
+          if [[ "$MODULE_TYPE" == "theme" ]]; then
+            # Themes have no version in database: check that blog uses theme files
+            if ! curl -s http://localhost/default/ | grep -q "/themes/$MODULE_ID/"; then
+              echo "::error::Theme $MODULE_ID is not used by blog (missing dependency or error on load)"
+              exit 1
+            fi
+            echo "Theme $MODULE_ID used by blog"
+            exit 0
+          fi
           version=$(docker exec -u www dotclear sh -c "$DC_PHP /tmp/dotclear-db.php /var/www/dotclear/dotclear.sqlite version $MODULE_ID")
           if [[ "$version" == "" ]]; then
             echo "::error::Module $MODULE_ID is not enabled in Dotclear (missing dependency or error on load)"
