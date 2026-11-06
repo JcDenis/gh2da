@@ -150,6 +150,14 @@ $check = function (string $label, string $url, array $post = []) use ($request, 
 if (!str_contains($body, 'process=Logout') && !str_contains($body, 'logout')) {
     echo "::error::Can not log in to Dotclear admin (HTTP $code)\n";
     file_put_contents($out . '/login.html', $body);
+    // Diagnostic: redirections and page text
+    $ch = curl_init($admin . 'index.php?process=Home');
+    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_HEADER => true, CURLOPT_FOLLOWLOCATION => true, CURLOPT_MAXREDIRS => 5, CURLOPT_COOKIEFILE => $cookie]);
+    $headers = (string) curl_exec($ch);
+    curl_close($ch);
+    preg_match_all('/^(HTTP\/\S+ \d+.*|Location: .*)$/mi', $headers, $m);
+    echo "Redirections:\n" . implode("\n", array_map('trim', $m[0])) . "\n";
+    echo 'Page: ' . substr(trim((string) preg_replace('/\s+/', ' ', strip_tags((string) preg_replace('#<(script|style)[^>]*>.*?</\1>#s', '', $body)))), 0, 400) . "\n";
     exit(1);
 }
 echo "Logged in to $admin\n";
