@@ -29,7 +29,11 @@ jobs:
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
           changed=0; errors=0
-          for repo in $(gh api --paginate "users/$OWNER/repos?per_page=100&type=owner" --jq '.[] | select(.archived == false) | .name'); do
+          if ! repos=$(gh api --paginate "users/$OWNER/repos?per_page=100&type=owner" --jq '.[] | select(.archived == false) | .name'); then
+            echo "::error::Can not list repositories, check secret USER_TOKEN"
+            exit 1
+          fi
+          for repo in $repos; do
             gh api "repos/$OWNER/$repo/contents/.github/workflows/dotclear.yml" --silent 2> /dev/null || continue
 
             info=$(gh api "repos/$OWNER/$repo")

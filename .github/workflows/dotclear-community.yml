@@ -1,0 +1,47 @@
+# Publish community health files to repository OWNER/.github
+#
+# Files from templates/community (issue templates, pull request template,
+# contributing guide, security policy) are copied to OWNER/.github, they apply
+# to all public repositories of the owner that do not have their own.
+#
+# Requires secret USER_TOKEN with contents (write) permission on OWNER/.github.
+
+name: Community health files
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - 'templates/community/**'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout gh2da
+        uses: actions/checkout@v7
+
+      - name: Publish to .github repository
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.USER_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          if ! git clone -q "https://x-access-token:$GH_TOKEN@github.com/$OWNER/.github.git" community; then
+            echo "::error::Can not clone $OWNER/.github, check secret USER_TOKEN"
+            exit 1
+          fi
+          cp -r templates/community/. community/
+          cd community
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing to update"
+          else
+            git commit -q -m "Update community health files from gh2da"
+            git push -q origin HEAD
+            echo "Community health files updated"
+          fi
