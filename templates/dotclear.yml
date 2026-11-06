@@ -35,7 +35,7 @@ permissions:
 
 jobs:
   module:
-    uses: JcDenis/gh2da/.github/workflows/dotclear-module.yml@dotclear-module
+    uses: JcDenis/gh2da/.github/workflows/dotclear-module.yml@master
     with:
       release: ${{ inputs.release == true }}
       version: ${{ inputs.version || '' }}

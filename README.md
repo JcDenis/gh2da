@@ -33,6 +33,30 @@ Workflow is chunk in 3 parts:
 
 dalaunch.yml starts every day and launch daread.yml for plugins and for themes, daread.yml launch daupdate.yml for each DA modules found.
 
+## DOTCLEAR MODULE WORKFLOW
+
+Reusable workflow `.github/workflows/dotclear-module.yml` does for each Dotclear module (plugin or theme):
+
+* **checks** on push, pull request and weekly (monday) : PHP lint and PHPStan (level max with deprecation rules)
+  against the Dotclear version required in `_define.php` (Dotclear master for the weekly run).
+  Required plugins and plugins used in code are taken from same owner repositories, then from franck-paul ones.
+* **release button** : Actions > Dotclear module > Run workflow > check "Prepare and publish a release".
+  Next version is today for date versions (2026.11.05), else increment after first dot (2.4.1 -> 2.5),
+  or the given version. `_define.php` and `CHANGELOG.md` (commits since last release) are updated and committed as "Release x".
+* **release** on a commit "Release x" pushed on default branch (or after release button) : checks must pass,
+  commit version must match `_define.php` version, then `_define.php` and `dcstore.xml` are updated
+  and a release is created with the module zip.
+* **branches cleanup** on push to default branch : branches merged into default branch are deleted.
+* **Telegram messages** : release published or failed, release preparation failed, branches deleted.
+
+Each module only needs the small caller workflow `templates/dotclear.yml` copied to `.github/workflows/dotclear.yml`
+and secrets BOT_GPG_KEY, BOT_GPG_PASS, TELEGRAM_ID, TELEGRAM_TOKEN.
+
+Workflow `.github/workflows/dotclear-digest.yml` sends every monday a Telegram summary of all modules
+(weekly checks results and releases of the week).
+
+Dependabot keeps actions of these workflows up to date.
+
 ## LICENSE
 
 Copyright Jean-Christian Paul Denis
