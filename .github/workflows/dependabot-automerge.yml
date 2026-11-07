@@ -46,7 +46,8 @@ jobs:
           UPDATE: ${{ steps.metadata.outputs.dependency-names }} ${{ steps.metadata.outputs.previous-version }} -> ${{ steps.metadata.outputs.new-version }}
         run: |
           echo "Update $UPDATE (${{ steps.metadata.outputs.update-type }})"
-          # Wait for other checks of the pull request (30 minutes max)
+          # Let other checks of the pull request start, then wait for them (30 minutes max)
+          sleep 30
           for i in $(seq 1 60); do
             # (gh pr checks exits with an error code while checks are pending, keep its output)
             checks=$(gh pr checks "$PR" --json name,bucket --jq '[.[] | select(.name | endswith("dependabot-automerge") | not)]' 2> /dev/null; true)
