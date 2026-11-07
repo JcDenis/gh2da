@@ -111,7 +111,11 @@ $request = function (string $url, array $post = []) use ($cookie): array {
 $failures = 0;
 $results  = [];
 
-$check = function (string $label, string $url, array $post = []) use ($request, $out, &$failures, &$results): string {
+// PHP errors from other files than module ones (core, other modules) are only reported once as warnings
+$module_path = '#/' . ($type === 'theme' ? 'themes' : 'plugins') . '/' . preg_quote($id, '#') . '/#';
+$warnings    = [];
+
+$check = function (string $label, string $url, array $post = []) use ($request, $out, $module_path, &$failures, &$results, &$warnings): string {
     [$code, $body] = $request($url, $post);
 
     $errors = [];
@@ -125,7 +129,13 @@ $check = function (string $label, string $url, array $post = []) use ($request, 
     // PHP errors displayed in page (display_errors on), with or without HTML
     if (preg_match_all('#(?:<b>)?(Fatal error|Parse error|Warning|Notice|Deprecated|Uncaught \w+)(?:</b>)?:\s+(.{0,300}?)(?: in (?:<b>)?(\S+?)(?:</b>)? on line (?:<b>)?(\d+))#s', $body, $matches, PREG_SET_ORDER)) {
         foreach ($matches as $m) {
-            $errors[] = trim(strip_tags($m[1] . ': ' . $m[2] . ' in ' . $m[3] . ':' . $m[4]));
+            $text = trim(strip_tags($m[1] . ': ' . $m[2] . ' in ' . preg_replace('#^.*?/(plugins|themes)/#', '$1/', (string) preg_replace('#^/var/www/dotclear/app/#', '', $m[3])) . ':' . $m[4]));
+            if (preg_match($module_path, $m[3])) {
+                $errors[] = $text;
+            } elseif (!isset($warnings[$text])) {
+                $warnings[$text] = $text;
+                echo "::warning::$text\n";
+            }
         }
     }
 
@@ -224,7 +234,8 @@ foreach ($public as $label => $path) {
 }
 
 // Summary
-$summary = "### Dotclear test of $type $id\n\n| | Page | HTTP | Errors |\n|---|---|---|---|\n" . implode("\n", $results) . "\n";
+$summary = "### Dotclear test of $type $id\n\n| | Page | HTTP | Errors |\n|---|---|---|---|\n" . implode("\n", $results) . "\n"
+    . ($warnings === [] ? '' : "\nOther PHP errors displayed in pages (not from module):\n" . implode('', array_map(fn ($t) => '- ⚠️ ' . htmlspecialchars($t) . "\n", $warnings)));
 if (getenv('GITHUB_STEP_SUMMARY')) {
     file_put_contents((string) getenv('GITHUB_STEP_SUMMARY'), $summary, FILE_APPEND);
 }
