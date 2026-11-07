@@ -2,7 +2,8 @@
 #
 # Summarizes for all repositories of the owner using dotclear.yml workflow:
 # - last checks on default branch (weekly checks are against Dotclear master),
-# - releases published during the last 7 days.
+# - releases published during the last 7 days,
+# - Dependabot pull requests kept open (see dependabot-automerge.yml).
 
 name: Dotclear modules digest
 
@@ -40,6 +41,9 @@ jobs:
             [[ "$rel" != "" ]] && releases="$releases\n- $repo ${rel% }"
           done
 
+          # Dependabot pull requests kept open (major updates or failed checks)
+          deps=$(gh api -X GET search/issues -f q="is:pr is:open author:app/dependabot user:$OWNER" --jq '.items[] | "\\n- [\(.repository_url | split("/") | last) #\(.number)](\(.html_url)) \(.title)"' 2> /dev/null | tr -d '\n' || true)
+
           {
             echo "message<<DIGEST_EOF"
             echo "📋 *Résumé hebdomadaire des modules Dotclear*"
@@ -53,6 +57,7 @@ jobs:
             else
               echo "Aucune release cette semaine."
             fi
+            [[ "$deps" != "" ]] && echo -e "\n🔧 Mises à jour Dependabot à vérifier :$deps"
             echo "DIGEST_EOF"
           } >> "$GITHUB_OUTPUT"
 

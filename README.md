@@ -68,7 +68,10 @@ Workflow `.github/workflows/dotclear-settings.yml` applies same settings to all 
 publishes community health files of `templates/community/` (issue and pull request templates, contributing, security)
 to the owner `.github` repository. Both need secret USER_TOKEN.
 
-Dependabot keeps actions of these workflows up to date.
+Dependabot keeps actions of these workflows up to date. Workflow `.github/workflows/dependabot-automerge.yml`
+merges Dependabot patch and minor updates once the other checks of the pull request succeeded,
+major updates are kept open and listed in the weekly digest. Other repositories use it with the caller
+`templates/dependabot-automerge.yml` copied to `.github/workflows/dependabot-automerge.yml`.
 
 ## LICENSE
 

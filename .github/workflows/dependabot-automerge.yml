@@ -1,0 +1,70 @@
+# Merge Dependabot pull requests without risk
+#
+# Patch and minor updates (ex: 1.27.0 -> 1.29.0) are merged once the other
+# checks of the pull request succeeded. Major updates (ex: v4 -> v5) are kept
+# open for review, they are listed in the weekly digest (dotclear-digest.yml).
+#
+# Used by this repository and called from other repositories with:
+#
+#   name: Dependabot auto-merge
+#   on: pull_request
+#   permissions:
+#     contents: write
+#     pull-requests: write
+#   jobs:
+#     dependabot:
+#       uses: JcDenis/gh2da/.github/workflows/dependabot-automerge.yml@master
+
+name: Dependabot auto-merge
+
+on:
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  dependabot-automerge:
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read update metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v3
+        with:
+          github-token: ${{ github.token }}
+
+      - name: Merge patch and minor updates
+        if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor' }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          UPDATE: ${{ steps.metadata.outputs.dependency-names }} ${{ steps.metadata.outputs.previous-version }} -> ${{ steps.metadata.outputs.new-version }}
+        run: |
+          echo "Update $UPDATE (${{ steps.metadata.outputs.update-type }})"
+          # Wait for other checks of the pull request (30 minutes max)
+          for i in $(seq 1 60); do
+            # (gh pr checks exits with an error code while checks are pending, keep its output)
+            checks=$(gh pr checks "$PR" --json name,bucket --jq '[.[] | select(.name | endswith("dependabot-automerge") | not)]' 2> /dev/null; true)
+            [[ "$checks" == "" ]] && checks='[]'
+            if [[ "$(echo "$checks" | jq '[.[] | select(.bucket == "fail" or .bucket == "cancel")] | length')" != "0" ]]; then
+              echo "::warning::Checks failed, pull request kept open"
+              exit 0
+            fi
+            [[ "$(echo "$checks" | jq '[.[] | select(.bucket == "pending")] | length')" == "0" ]] && break
+            sleep 30
+          done
+          if [[ "$(echo "$checks" | jq '[.[] | select(.bucket == "pending")] | length')" != "0" ]]; then
+            echo "::warning::Checks still running, pull request kept open"
+            exit 0
+          fi
+          gh pr merge "$PR" --merge --delete-branch
+          echo "Pull request #$PR merged"
+
+      - name: Keep major updates open
+        if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-major' }}
+        run: echo "::notice::Major update ${{ steps.metadata.outputs.dependency-names }} ${{ steps.metadata.outputs.previous-version }} -> ${{ steps.metadata.outputs.new-version }}, review required"
