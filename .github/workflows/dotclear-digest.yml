@@ -1,7 +1,7 @@
 # Weekly Telegram digest of Dotclear modules
 #
 # Summarizes for all repositories of the owner using dotclear.yml workflow:
-# - last checks on default branch (weekly checks are against Dotclear master),
+# - last checks on default branch (against the Dotclear version required by each module),
 # - releases published during the last 7 days,
 # - Dependabot pull requests kept open (see dependabot-automerge.yml).
 

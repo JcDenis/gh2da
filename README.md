@@ -38,10 +38,10 @@ dalaunch.yml starts every day and launch daread.yml for plugins and for themes, 
 Reusable workflow `.github/workflows/dotclear-module.yml` does for each Dotclear module (plugin or theme):
 
 * **checks** on push, pull request and weekly (monday) : PHP lint and PHPStan (level max with deprecation rules)
-  against the Dotclear version required in `_define.php` (Dotclear master for the weekly run).
+  against the latest release of the Dotclear version required in `_define.php` (Dotclear master if not yet released).
   Required plugins and plugins used in code are taken from same owner repositories, then from franck-paul ones.
 * **tests** after checks : a Dotclear site is started with the [docker-dotclear](https://github.com/JcDenis/docker-dotclear) image
-  (`latest`, or `dev` when the module needs Dotclear master and for the weekly run), the module and its dependencies are installed,
+  (`latest`, or `dev` when the module or one of its dependencies needs a not yet released Dotclear), the module and its dependencies are installed,
   then admin pages (dashboard, settings, posts, media, widgets, module page and configuration...) and public pages
   (home, post, archive, search, feeds, 404) are browsed. A page fails on HTTP status >= 500 or PHP error,
   and PHP errors of server logs from module files fail the test (others are only warnings).
