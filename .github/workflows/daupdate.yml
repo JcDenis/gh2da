@@ -151,7 +151,7 @@ jobs:
         run: echo '${{ steps.dialog.outputs.module }} ${{ steps.dialog.outputs.version }} = ${{ steps.dialog.outputs.message }}' >> $GITHUB_STEP_SUMMARY
 
       - name: Send Telegram Message Ok
-        uses: appleboy/telegram-action@v1.1.1
+        uses: appleboy/telegram-action@v1.1.2
         with:
           to: ${{ secrets.TELEGRAM_ID }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
