@@ -665,7 +665,7 @@ jobs:
           directory: ..
           path: '${{ steps.repository.outputs.repository-name }}'
           filename: '${{ steps.dotclear.outputs.type }}-${{ steps.repository.outputs.repository-name }}.zip'
-          exclusions: '*.git* /*node_modules/* .editorconfig'
+          exclusions: '*.git* /*node_modules/* .editorconfig ${{ steps.repository.outputs.repository-name }}/docs/*'
 
       - name: Create release with archive
         uses: ncipollo/release-action@v1
