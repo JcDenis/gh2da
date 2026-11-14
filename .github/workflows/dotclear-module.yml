@@ -10,10 +10,12 @@
 #            when the module needs Dotclear master), enable the module,
 #            browse admin and public pages and check PHP errors in logs
 # - prepare: on manual run with "release" checked, compute next version,
-#            update _define.php and CHANGELOG.md (commits starting with
-#            "[cosmetic]" and "[ci]" are skipped), commit "Release x"
+#            update _define.php (version, date), dcstore.xml and CHANGELOG.md
+#            (commits starting with "[cosmetic]" and "[ci]" are skipped),
+#            all in a single commit "Release x"
 # - release: on commit "Release x" pushed to master (or after prepare),
-#            update _define.php and dcstore.xml, create release with zip
+#            update _define.php and dcstore.xml if not done by the release button
+#            (one commit), create release with zip
 #            and notes (changes from CHANGELOG.md, requirements, links)
 # - clean:   on push to master, delete branches merged into master
 #
@@ -419,6 +421,7 @@ jobs:
       HAS_TELEGRAM: ${{ secrets.TELEGRAM_TOKEN != '' }}
     outputs:
       version: ${{ steps.prepare.outputs.version }}
+      prepared: ${{ steps.prepare.outputs.commit }}
     steps:
       - name: Checkout module
         uses: actions/checkout@v7
@@ -502,7 +505,23 @@ jobs:
 
           // _define.php
           $define = preg_replace('/(registerModule\(.*?,.*?,.*?,\s*[\'"])' . preg_quote($current, '/') . '([\'"])/s', '${1}' . $version . '${2}', $define, 1);
+          // Release date, and dcstore.xml, written now so that the release needs no other commit
+          $date   = gmdate('c');
+          $define = preg_replace('/(\'date\'\s+=>\s)(\'.*?\')/s', "$1'" . $date . "'", $define);
           file_put_contents('_define.php', $define);
+          if (file_exists('dcstore.xml')) {
+            $type  = preg_match('/[\'"]type[\'"]\s*=>\s*[\'"]theme[\'"]/', $define) ? 'theme' : 'plugin';
+            $dcmin = preg_match('/\[\s*[\'"]core[\'"]\s*,\s*[\'"]([0-9.]+)[\'"]/', $define, $m) ? $m[1] : '';
+            $url   = 'https://github.com/' . getenv('GITHUB_REPOSITORY') . '/releases/download/v' . $version . '/' . $type . '-' . getenv('MODULE_ID') . '.zip';
+            $ds    = (string) file_get_contents('dcstore.xml');
+            $ds    = preg_replace('/<version>(.*?)<\/version>/s', '<version>' . $version . '</version>', $ds);
+            $ds    = preg_replace('/<file>(.*?)<\/file>/s', '<file>' . $url . '</file>', $ds);
+            $ds    = preg_replace('/<date>(.*?)<\/date>/s', '<date>' . $date . '</date>', $ds);
+            if ($dcmin !== '') {
+              $ds = preg_replace('/<da:dcmin>(.*?)<\/da:dcmin>/s', '<da:dcmin>' . $dcmin . '</da:dcmin>', $ds);
+            }
+            file_put_contents('dcstore.xml', $ds);
+          }
 
           file_put_contents((string) getenv('GITHUB_OUTPUT'), "version=$version\ncommit=true\n", FILE_APPEND);
           echo "Release $current -> $version\n\n$entry";
@@ -516,6 +535,7 @@ jobs:
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           fi
           git add _define.php CHANGELOG.md
+          if [[ -f dcstore.xml ]]; then git add dcstore.xml; fi
           git commit -m "Release ${{ steps.prepare.outputs.version }}"
           git push
 
@@ -605,8 +625,10 @@ jobs:
           git_user_signingkey: true
           git_commit_gpgsign: true
 
+      # Only for a commit "Release x" pushed by hand (the release button already wrote these files)
       # Parser from https://github.com/franck-paul
       - name: Update version and date
+        if: ${{ needs.prepare.outputs.prepared != 'true' }}
         shell: php {0}
         env:
           VERSION: ${{ steps.dotclear.outputs.version }}
@@ -616,6 +638,14 @@ jobs:
           <?php
           $version = (string) getenv('VERSION');
           $date    = date('c');
+          // Already done (resumed release, or files updated by hand in the commit "Release x")
+          if (file_exists('dcstore.xml')) {
+            $ds = (string) file_get_contents('dcstore.xml');
+            if (str_contains($ds, '<version>' . $version . '</version>') && str_contains($ds, '<file>' . getenv('DOWNLOAD_URL') . '</file>')) {
+              echo "Files already up to date\n";
+              exit(0);
+            }
+          }
           if (file_exists('_define.php')) {
             $ds = file_get_contents('_define.php');
             if ($ds) {
@@ -648,16 +678,21 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           fi
+          # One commit for both files
+          files=""
           for file in _define.php dcstore.xml; do
             if [[ -f $file && "$(git diff --name-only -- $file)" != "" ]]; then
-              echo "$file modified, need to be commit"
               git add $file
-              git commit -m "Update $file for release"
-              git push
-            else
-              echo "$file not modified"
+              files="${files:+$files and }$file"
             fi
           done
+          if [[ "$files" != "" ]]; then
+            echo "$files modified, need to be commit"
+            git commit -m "[ci] Update $files for release"
+            git push
+          else
+            echo "Nothing to commit"
+          fi
 
       - name: Create archive
         uses: thedoctor0/zip-release@0.7.6
