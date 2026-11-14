@@ -55,7 +55,7 @@ Reusable workflow `.github/workflows/dotclear-module.yml` does for each Dotclear
   or the given version. `_define.php` and `CHANGELOG.md` (commits since last release, except those starting with `[cosmetic]`) are updated and committed as "Release x".
 * **release** on a commit "Release x" pushed on default branch (or after release button) : checks and tests must pass,
   commit version must match `_define.php` version, then `_define.php` and `dcstore.xml` are updated
-  and a release is created with the module zip (without the `docs/` folder of the module, kept for the repository only).
+  and a release is created with the module zip (without the `docs/` folder and the `CLAUDE.md` and `CONCEPTION.md` files of the module, kept for the repository only).
   The release message gives the module description, its changes (entry of `CHANGELOG.md`), requirements (`_define.php`),
   how to install it, and links to the README, the French user guide (`docs/fr/utilisation.md`) if any, issues and full changelog.
 * **branches cleanup** on push to default branch : branches merged into default branch are deleted.
@@ -76,6 +76,13 @@ Dependabot keeps actions of these workflows up to date. Workflow `.github/workfl
 merges Dependabot patch and minor updates once the other checks of the pull request succeeded,
 major updates are kept open and listed in the weekly digest. Other repositories use it with the caller
 `templates/dependabot-automerge.yml` copied to `.github/workflows/dependabot-automerge.yml`.
+
+## CONVENTIONS
+
+[`CONVENTIONS.md`](https://github.com/JcDenis/gh2da/blob/master/CONVENTIONS.md) holds the shared conventions of the modules
+(code, administration, translations, tests, commits, releases, documentation), for humans and AI assistants.
+Each module points to it from its own short `CLAUDE.md` (model in `templates/CLAUDE.md`).
+Other authors can use it as a base.
 
 ## LICENSE
 
