@@ -709,7 +709,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          echo "tag=$(gh api "repos/${{ github.repository }}/releases/latest" --jq .tag_name 2>/dev/null || true)" >> $GITHUB_OUTPUT
+          # No release yet (first release): gh prints the error of the API on its standard output, which is not a tag
+          tag=$(gh api "repos/${{ github.repository }}/releases/latest" --jq .tag_name 2>/dev/null) || tag=""
+          echo "tag=$tag" >> $GITHUB_OUTPUT
 
       # Release notes: description, changes from CHANGELOG.md, requirements, installation, links
       # (modules links point to the Dotclear repository on dotclear.org)
