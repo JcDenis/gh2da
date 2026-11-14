@@ -4,6 +4,7 @@ Notes for AI assistants working on the Dotclear plugin <Module>.
 
 **Read first** the shared conventions of the author's Dotclear modules:
 https://raw.githubusercontent.com/JcDenis/gh2da/master/CONVENTIONS.md
+(if a web tool refuses the address, use `curl -s` on it from the shell).
 The rules below take precedence for this module.
 
 ## Module
