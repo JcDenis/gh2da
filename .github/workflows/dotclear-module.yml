@@ -11,7 +11,7 @@
 #            browse admin and public pages and check PHP errors in logs
 # - prepare: on manual run with "release" checked, compute next version,
 #            update _define.php and CHANGELOG.md (commits starting with
-#            "[cosmetic]" are skipped), commit "Release x"
+#            "[cosmetic]" and "[ci]" are skipped), commit "Release x"
 # - release: on commit "Release x" pushed to master (or after prepare),
 #            update _define.php and dcstore.xml, create release with zip
 #            and notes (changes from CHANGELOG.md, requirements, links)
@@ -482,7 +482,7 @@ jobs:
           $last = trim((string) shell_exec("git log --format=%H -i --grep='^release ' -1"));
           $range = $last !== '' ? escapeshellarg($last . '..HEAD') : 'HEAD';
           $subjects = array_filter(explode("\n", (string) shell_exec("git log --reverse --no-merges --format=%s $range")), fn (string $s): bool =>
-            trim($s) !== '' && !preg_match('/^(\[cosmetic\]|Update (_define\.php|dcstore\.xml) for release|Update release workflow|Add workflow to delete merged branches|Use central Dotclear module workflow)/', $s));
+            trim($s) !== '' && !preg_match('/^(\[cosmetic\]|\[ci\]|Update (_define\.php|dcstore\.xml) for release|Update release workflow|Add workflow to delete merged branches|Use central Dotclear module workflow)/', $s));
           if ($subjects === []) {
             $fail('Nothing to release since last release');
           }
