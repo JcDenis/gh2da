@@ -666,7 +666,7 @@ jobs:
           directory: ..
           path: '${{ steps.repository.outputs.repository-name }}'
           filename: '${{ steps.dotclear.outputs.type }}-${{ steps.repository.outputs.repository-name }}.zip'
-          exclusions: '*.git* /*node_modules/* .editorconfig ${{ steps.repository.outputs.repository-name }}/docs/*'
+          exclusions: '*.git* /*node_modules/* .editorconfig ${{ steps.repository.outputs.repository-name }}/docs/* ${{ steps.repository.outputs.repository-name }}/CLAUDE.md ${{ steps.repository.outputs.repository-name }}/CONCEPTION.md'
 
       - name: Find previous release
         id: previous
