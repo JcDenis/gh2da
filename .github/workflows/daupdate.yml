@@ -56,7 +56,7 @@ jobs:
         id: compare
         if: ${{ success() }}
         run: |
-          echo '* DA: ${{ inputs.module_version }}' >> $GITHUB_STEP_SUMMARY
+          echo '* Repository: ${{ inputs.module_version }}' >> $GITHUB_STEP_SUMMARY
           echo '* GH: ${{ steps.local.outputs.version }}' >> $GITHUB_STEP_SUMMARY
           function version { echo "$@" | awk -F. '{ printf("%d%04d%03d\n", $1,$2,$3); }'; }
           if [ $(version '${{ steps.local.outputs.version }}') -gt $(version '${{ inputs.module_version }}') ]; then
@@ -73,7 +73,7 @@ jobs:
     runs-on: ubuntu-latest
     if: (needs.version.outputs.newer == 'true')
     steps:
-      - name: Update DA repository
+      - name: Update Dotclear repository
         id: dialog
         shell: php {0}
         run: |
@@ -88,8 +88,8 @@ jobs:
           file_put_contents(getenv('GITHUB_OUTPUT'), "version=$version\n", FILE_APPEND);
           file_put_contents(getenv('GITHUB_OUTPUT'), "module=$module\n", FILE_APPEND);
 
-          // authenticate to DA
-          echo "Authenticate to DA API.\n";
+          // authenticate to Dotclear repository
+          echo "Authenticate to Dotclear repository API.\n";
           $ch = curl_init();
           curl_setopt_array($ch, [
             CURLOPT_URL => $api_url  . 'auth',
@@ -125,8 +125,8 @@ jobs:
             return;
           }
 
-          // Update DA
-          echo "Update DA contribution.\n";
+          // Update Dotclear repository
+          echo "Update contribution.\n";
           $ch = curl_init();
           curl_setopt_array($ch, [
             CURLOPT_URL => $api_url . 'update',
@@ -157,6 +157,7 @@ jobs:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           format: markdown
           message: |
-            __Dotaddict contribution update__
+            __Dotclear repository contribution update__
+            - ${{ inputs.api_url }}
             - Module: ${{ steps.dialog.outputs.module }} ${{ steps.dialog.outputs.version }} 
             - Response: ${{ steps.dialog.outputs.message }}

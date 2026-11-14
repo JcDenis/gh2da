@@ -10,7 +10,7 @@ env:
 
 jobs:
   launch:
-    name: Launch DA workflow
+    name: Launch Dotclear repository workflow
     runs-on: ubuntu-latest
     steps:
       - name: Parse distant version

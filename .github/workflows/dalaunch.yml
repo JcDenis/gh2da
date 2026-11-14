@@ -4,14 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       api_url:
-        description: The DA API URL
+        description: The Dotclear repository API URL
         required: true
         type: string
         default: 'https://repo.dotclear.watch/'
 
 jobs:
   launch:
-    name: Launch DA workflow
+    name: Launch Dotclear repository workflow
     runs-on: ubuntu-latest
     steps:
       - name: Parse distant version
@@ -39,6 +39,6 @@ jobs:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           format: markdown
           message: |
-            __Dotaddict contribution update__
+            __Dotclear repository contribution update__
             - ${{ inputs.api_url }}
-            - Launch update workflows
+            - Launch update workflows

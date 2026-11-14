@@ -1,13 +1,14 @@
 # README
 
-> Update DotAddict (DA) repository contributions from github repository
+> Update Dotclear repository contributions from github repository
 
 These workflows allow you to update your Dotclear modules (plugins or themes)
-from your github modules repositories to your Dotaddict repository account.
+from your github modules repositories to your account on the Dotclear repository
+(https://dotclear.org/, or https://repo.dotclear.watch/ as test and fallback repository).
 
 ## GENERAL
 
-* You must have a valid DA console account
+* You must have a valid Dotclear repository account
 * These workflows must be in same user repository as the ones to update
 * Modules repository must have same name as module
 * Modules releases must have their versions as tag prefixed with "v"
@@ -17,8 +18,8 @@ from your github modules repositories to your Dotaddict repository account.
 
 These workflows required following secrets:
 
-* DA_USERNAME : DA user console login
-* DA_PASSWORD : DA user console password
+* DA_USERNAME : Dotclear repository user login
+* DA_PASSWORD : Dotclear repository user password
 * TELEGRAM_ID : Telegram chat id
 * TELEGRAM_TOKEN : Telegram bot token
 * USER_TOKEN : Github user token with rights to access all modules repositories
@@ -28,10 +29,11 @@ These workflows required following secrets:
 Workflow is chunk in 3 parts:
 
 * dalaunch.yml : Scheduled run updates
-* daread.yml : Get user DA contributions and launch related update
-* daupdate.yml : Check and update DA contribution
+* daread.yml : Get user contributions on the Dotclear repository and launch related update
+* daupdate.yml : Check and update a contribution on the Dotclear repository
 
-dalaunch.yml starts every day and launch daread.yml for plugins and for themes, daread.yml launch daupdate.yml for each DA modules found.
+dalaunch.yml starts every day and launch daread.yml for plugins and for themes, daread.yml launch daupdate.yml for each module found on the repository.
+updatedc.yml (dotclear.org) and updatewatch.yml (repo.dotclear.watch) start dalaunch.yml every day for each repository.
 
 ## DOTCLEAR MODULE WORKFLOW
 
