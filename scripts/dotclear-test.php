@@ -18,6 +18,9 @@
  * "admin:index.php?process=Plugin&p=myModule&part=xxx" or "public:my-url/xxx".
  *
  * Exit with 1 if a page fails (HTTP status >= 500 or PHP error in page).
+ * A core page (not a module page) that fails is checked again with the plugin disabled
+ * (_disabled file in the container): if it also fails without the plugin, it is a Dotclear issue,
+ * reported as a warning (DOCKER_CONTAINER, default "dotclear").
  *
  * Second mode, after pages: php dotclear-test.php logs <php log file> [<deprecated log file>]
  * Reports PHP errors from server logs: errors in module files fail, others are warnings.
@@ -115,7 +118,9 @@ $results  = [];
 $module_path = '#/' . ($type === 'theme' ? 'themes' : 'plugins') . '/' . preg_quote($id, '#') . '/#';
 $warnings    = [];
 
-$check = function (string $label, string $url, array $post = []) use ($request, $out, $module_path, &$failures, &$results, &$warnings): string {
+$retry = [];
+
+$check = function (string $label, string $url, array $post = [], bool $core = false) use ($request, $out, $module_path, &$failures, &$results, &$warnings, &$retry): string {
     [$code, $body] = $request($url, $post);
 
     $errors = [];
@@ -142,11 +147,16 @@ $check = function (string $label, string $url, array $post = []) use ($request, 
     $status = $errors === [] ? 'OK' : 'FAIL';
     $results[] = sprintf('| %s | %s | %d | %s |', $status === 'OK' ? '✅' : '❌', $label, $code, implode('<br>', array_map(fn ($e) => htmlspecialchars($e), $errors)));
     echo sprintf("%-4s %3d %s (%s)\n", $status, $code, $label, $url);
-    foreach ($errors as $error) {
-        echo "::error title=$label::$error\n";
-    }
     if ($errors !== []) {
         $failures++;
+        if ($core && preg_grep('/^(HTTP \d+|no response)/', $errors, PREG_GREP_INVERT) === []) {
+            // Error reported after the check without the module
+            $retry[$label] = [$url, count($results) - 1, $errors];
+        } else {
+            foreach ($errors as $error) {
+                echo "::error title=$label::$error\n";
+            }
+        }
         file_put_contents($out . '/' . preg_replace('/[^a-z0-9]+/i', '-', $label) . '.html', $body);
     }
 
@@ -226,16 +236,56 @@ if (file_exists($dir . '/.github/dotclear-test.txt')) {
     }
 }
 
+$core_pages = ['admin dashboard', 'admin plugins', 'admin themes', 'admin blog settings', 'admin user prefs', 'admin search',
+    'admin new post', 'admin posts', 'admin categories', 'admin comments', 'admin media', 'admin users', 'admin widgets',
+    'public home', 'public page 2', 'public archive', 'public search', 'public atom', 'public rss2', 'public 404', 'public post'];
 foreach ($pages as $label => $path) {
-    $check($label, $admin . $path);
+    $check($label, $admin . $path, [], in_array($label, $core_pages, true));
 }
 foreach ($public as $label => $path) {
-    $check($label, $blog . $path);
+    $check($label, $blog . $path, [], in_array($label, $core_pages, true));
+}
+
+// Core pages that failed: check them again without the plugin, a failure without it is a Dotclear issue
+if ($retry !== []) {
+    $container = $env('DOCKER_CONTAINER', 'dotclear');
+    $disabled  = '/var/www/dotclear/plugins/' . $id . '/_disabled';
+    $rc        = 1;
+    if ($type === 'plugin') {
+        exec('docker exec ' . escapeshellarg($container) . ' touch ' . escapeshellarg($disabled) . ' 2>&1', $o, $rc);
+    }
+    foreach ($retry as $label => [$url, $row, $errors]) {
+        if ($rc !== 0) {
+            foreach ($errors as $error) {
+                echo "::error title=$label::$error\n";
+            }
+        }
+    }
+    if ($rc === 0) {
+        foreach ($retry as $label => [$url, $row, $errors]) {
+            [$code] = $request($url);
+            if ($code === 0 || $code >= 500) {
+                $failures--;
+                $results[$row] = sprintf('| ⚠️ | %s | %d | %s |', $label, $code, 'Also fails without the module (Dotclear issue): ' . implode('<br>', array_map(fn ($e) => htmlspecialchars($e), $errors)));
+                foreach ($errors as $error) {
+                    $text = "$label also fails without the module (Dotclear issue): $error";
+                    $warnings[$text] = $text;
+                    echo "::warning title=$label::$text\n";
+                }
+            } else {
+                echo "$label works without the module (HTTP $code): the module breaks it\n";
+                foreach ($errors as $error) {
+                    echo "::error title=$label::$error\n";
+                }
+            }
+        }
+        exec('docker exec ' . escapeshellarg($container) . ' rm -f ' . escapeshellarg($disabled));
+    }
 }
 
 // Summary
 $summary = "### Dotclear test of $type $id\n\n| | Page | HTTP | Errors |\n|---|---|---|---|\n" . implode("\n", $results) . "\n"
-    . ($warnings === [] ? '' : "\nOther PHP errors displayed in pages (not from module):\n" . implode('', array_map(fn ($t) => '- ⚠️ ' . htmlspecialchars($t) . "\n", $warnings)));
+    . ($warnings === [] ? '' : "\nWarnings (not from module):\n" . implode('', array_map(fn ($t) => '- ⚠️ ' . htmlspecialchars($t) . "\n", $warnings)));
 if (getenv('GITHUB_STEP_SUMMARY')) {
     file_put_contents((string) getenv('GITHUB_STEP_SUMMARY'), $summary, FILE_APPEND);
 }
