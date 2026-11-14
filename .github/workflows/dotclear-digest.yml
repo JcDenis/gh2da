@@ -26,7 +26,7 @@ jobs:
         run: |
           since=$(date -u -d '7 days ago' +%Y-%m-%dT%H:%M:%SZ)
           total=0; ok=0; failed=""; pending=0; releases=""
-          for repo in $(gh api --paginate "users/$OWNER/repos?per_page=100&type=owner" --jq '.[] | select(.archived == false) | .name'); do
+          for repo in $(gh api --paginate "users/$OWNER/repos?per_page=100&type=owner" --jq '.[] | select(.archived == false and .private == false) | .name'); do
             # Only repositories using the Dotclear module workflow
             gh api "repos/$OWNER/$repo/contents/.github/workflows/dotclear.yml" --silent 2> /dev/null || continue
             total=$((total + 1))

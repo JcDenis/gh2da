@@ -29,7 +29,7 @@ jobs:
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
           changed=0; errors=0
-          if ! repos=$(gh api --paginate "users/$OWNER/repos?per_page=100&type=owner" --jq '.[] | select(.archived == false) | .name'); then
+          if ! repos=$(gh api --paginate "users/$OWNER/repos?per_page=100&type=owner" --jq '.[] | select(.archived == false and .private == false) | .name'); then
             echo "::error::Can not list repositories, check secret USER_TOKEN"
             exit 1
           fi
