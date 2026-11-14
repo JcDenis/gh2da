@@ -677,6 +677,7 @@ jobs:
           echo "tag=$(gh api "repos/${{ github.repository }}/releases/latest" --jq .tag_name 2>/dev/null || true)" >> $GITHUB_OUTPUT
 
       # Release notes: description, changes from CHANGELOG.md, requirements, installation, links
+      # (modules links point to the Dotclear repository on dotclear.org)
       - name: Write release notes
         shell: php {0}
         env:
@@ -732,7 +733,7 @@ jobs:
             } elseif (strtolower($id) === 'php') {
               $reqs[] = '* PHP' . ($min !== '' ? ' ' . $min . ' or later' : '');
             } elseif ($id !== '') {
-              $reqs[] = '* ' . $id . ($min !== '' ? ' ' . $min . ' or later' : '');
+              $reqs[] = '* [' . $id . '](https://dotclear.org/plugin/detail/' . rawurlencode($id) . ')' . ($min !== '' ? ' ' . $min . ' or later' : '');
             }
           }
 
@@ -748,15 +749,16 @@ jobs:
           $out[] = '## Installation';
           $out[] = '';
           if ($type === 'theme') {
-            $out[] = '* From the administration of your blog: *Blog appearance* > *Add themes*, or let Dotclear update it from *Blog appearance*.';
+            $out[] = '* From the administration of your blog: *Blog appearance* > *Add themes* (Dotclear repository), or let Dotclear update it from *Blog appearance*.';
             $out[] = '* Manually: download `' . $archive . '` below and upload it in *Blog appearance* > *Add themes* > *Install or upgrade manually*.';
           } else {
-            $out[] = '* From the administration of your blog: *Plugins management* > *Add plugins*, or let Dotclear update it from *Plugins management*.';
+            $out[] = '* From the administration of your blog: *Plugins management* > *Add plugins* (Dotclear repository), or let Dotclear update it from *Plugins management*.';
             $out[] = '* Manually: download `' . $archive . '` below and upload it in *Plugins management* > *Add plugins* > *Install or upgrade manually*.';
           }
           $out[] = '';
           $out[] = '## Links';
           $out[] = '';
+          $out[] = '* [Dotclear repository](https://dotclear.org/' . $type . '/detail/' . rawurlencode($module->id) . ')';
           $out[] = '* [README](' . $tree . '/README.md)';
           if (file_exists('docs/fr/utilisation.md')) {
             $out[] = '* [User guide (in French)](' . $tree . '/docs/fr/utilisation.md)';
