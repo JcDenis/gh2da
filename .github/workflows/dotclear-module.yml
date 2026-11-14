@@ -14,6 +14,7 @@
 #            "[cosmetic]" are skipped), commit "Release x"
 # - release: on commit "Release x" pushed to master (or after prepare),
 #            update _define.php and dcstore.xml, create release with zip
+#            and notes (changes from CHANGELOG.md, requirements, links)
 # - clean:   on push to master, delete branches merged into master
 #
 # Telegram messages (if secrets TELEGRAM_ID and TELEGRAM_TOKEN exist):
@@ -667,6 +668,106 @@ jobs:
           filename: '${{ steps.dotclear.outputs.type }}-${{ steps.repository.outputs.repository-name }}.zip'
           exclusions: '*.git* /*node_modules/* .editorconfig ${{ steps.repository.outputs.repository-name }}/docs/*'
 
+      - name: Find previous release
+        id: previous
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "tag=$(gh api "repos/${{ github.repository }}/releases/latest" --jq .tag_name 2>/dev/null || true)" >> $GITHUB_OUTPUT
+
+      # Release notes: description, changes from CHANGELOG.md, requirements, installation, links
+      - name: Write release notes
+        shell: php {0}
+        env:
+          VERSION: ${{ steps.dotclear.outputs.version }}
+          MODULE_ID: ${{ steps.repository.outputs.repository-name }}
+          ARCHIVE: ${{ steps.dotclear.outputs.type }}-${{ steps.repository.outputs.repository-name }}.zip
+          PREVIOUS_TAG: ${{ steps.previous.outputs.tag }}
+          NOTES_FILE: ${{ runner.temp }}/release-notes.md
+        run: |
+          <?php
+          $version = (string) getenv('VERSION');
+          $repo    = (string) getenv('GITHUB_REPOSITORY');
+          $server  = (string) (getenv('GITHUB_SERVER_URL') ?: 'https://github.com');
+          $archive = (string) getenv('ARCHIVE');
+          $prev    = trim((string) getenv('PREVIOUS_TAG'));
+
+          // Read module definition
+          $module = new class () {
+            public string $id = '';
+            public array $args = [];
+            public function registerModule(...$args): void { $this->args = $args; }
+            public function load(string $id): void { $this->id = $id; include '_define.php'; }
+          };
+          $module->load((string) getenv('MODULE_ID'));
+          [$name, $desc] = [(string) ($module->args[0] ?? $module->id), (string) ($module->args[1] ?? '')];
+          $props = is_array($module->args[4] ?? null) ? $module->args[4] : [];
+          $type  = ($props['type'] ?? 'plugin') === 'theme' ? 'theme' : 'plugin';
+
+          // Changes of this version in CHANGELOG.md
+          $changes = [];
+          $lines   = file_exists('CHANGELOG.md') ? preg_split('/\R/', (string) file_get_contents('CHANGELOG.md')) : [];
+          $in      = false;
+          foreach ($lines as $i => $line) {
+            $isHeader = isset($lines[$i + 1]) && preg_match('/^={3,}\s*$/', $lines[$i + 1]);
+            if ($isHeader) {
+              if ($in) { break; }
+              $in = (bool) preg_match('/^\S.*\s' . preg_quote($version, '/') . '(\s+-\s.*)?\s*$/', $line);
+              continue;
+            }
+            if ($in && !preg_match('/^={3,}\s*$/', $line) && trim($line) !== '') {
+              $changes[] = rtrim($line);
+            }
+          }
+
+          // Requirements
+          $reqs = [];
+          foreach ((array) ($props['requires'] ?? []) as $req) {
+            $req = (array) $req;
+            $id  = (string) ($req[0] ?? '');
+            $min = isset($req[1]) && $req[1] !== '' ? (string) $req[1] : '';
+            if ($id === 'core') {
+              array_unshift($reqs, '* Dotclear' . ($min !== '' ? ' ' . $min . ' or later' : ''));
+            } elseif (strtolower($id) === 'php') {
+              $reqs[] = '* PHP' . ($min !== '' ? ' ' . $min . ' or later' : '');
+            } elseif ($id !== '') {
+              $reqs[] = '* ' . $id . ($min !== '' ? ' ' . $min . ' or later' : '');
+            }
+          }
+
+          $url  = $server . '/' . $repo;
+          $tree = $url . '/blob/v' . $version;
+          $out  = [];
+          if ($desc !== '') { $out[] = '> ' . $desc; $out[] = ''; }
+          $out[] = '## Changes';
+          $out[] = '';
+          $out   = array_merge($out, $changes !== [] ? $changes : ['* See [CHANGELOG](' . $tree . '/CHANGELOG.md)']);
+          if ($reqs !== []) { $out[] = ''; $out[] = '## Requirements'; $out[] = ''; $out = array_merge($out, $reqs); }
+          $out[] = '';
+          $out[] = '## Installation';
+          $out[] = '';
+          if ($type === 'theme') {
+            $out[] = '* From the administration of your blog: *Blog appearance* > *Add themes*, or let Dotclear update it from *Blog appearance*.';
+            $out[] = '* Manually: download `' . $archive . '` below and upload it in *Blog appearance* > *Add themes* > *Install or upgrade manually*.';
+          } else {
+            $out[] = '* From the administration of your blog: *Plugins management* > *Add plugins*, or let Dotclear update it from *Plugins management*.';
+            $out[] = '* Manually: download `' . $archive . '` below and upload it in *Plugins management* > *Add plugins* > *Install or upgrade manually*.';
+          }
+          $out[] = '';
+          $out[] = '## Links';
+          $out[] = '';
+          $out[] = '* [README](' . $tree . '/README.md)';
+          if (file_exists('docs/fr/utilisation.md')) {
+            $out[] = '* [User guide (in French)](' . $tree . '/docs/fr/utilisation.md)';
+          }
+          $out[] = '* [Report an issue](' . (string) ($props['support'] ?? $url . '/issues') . ')';
+          if ($prev !== '' && $prev !== 'v' . $version) {
+            $out[] = '* Full changelog: [' . $prev . '...v' . $version . '](' . $url . '/compare/' . $prev . '...v' . $version . ')';
+          }
+          file_put_contents((string) (getenv('NOTES_FILE') ?: 'php://stdout'), implode("\n", $out) . "\n");
+          echo file_get_contents((string) getenv('NOTES_FILE'));
+
       - name: Create release with archive
         uses: ncipollo/release-action@v1
         with:
@@ -675,7 +776,8 @@ jobs:
           commit: ${{ github.ref_name }}
           draft: false
           prerelease: false
-          generateReleaseNotes: true
+          bodyFile: ${{ runner.temp }}/release-notes.md
+          generateReleaseNotes: false
           name: ${{ steps.repository.outputs.repository-name }} ${{ steps.dotclear.outputs.version }}
           tag: 'v${{ steps.dotclear.outputs.version }}'
 

@@ -54,6 +54,8 @@ Reusable workflow `.github/workflows/dotclear-module.yml` does for each Dotclear
 * **release** on a commit "Release x" pushed on default branch (or after release button) : checks and tests must pass,
   commit version must match `_define.php` version, then `_define.php` and `dcstore.xml` are updated
   and a release is created with the module zip (without the `docs/` folder of the module, kept for the repository only).
+  The release message gives the module description, its changes (entry of `CHANGELOG.md`), requirements (`_define.php`),
+  how to install it, and links to the README, the French user guide (`docs/fr/utilisation.md`) if any, issues and full changelog.
 * **branches cleanup** on push to default branch : branches merged into default branch are deleted.
 * **Telegram messages** : release published or failed, release preparation failed, branches deleted.
 
