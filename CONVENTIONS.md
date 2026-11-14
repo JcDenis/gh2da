@@ -114,6 +114,7 @@ Commit subjects start with **one tag**, in lower case, for the main effect of th
 * A commit without tag counts as `[change]`.
 * The release workflow skips commits starting with `[cosmetic]` or `[ci]`; the other ones are written in the CHANGELOG as they are.
 * The release commit is a single line `Release x`, without tag and without trailer.
+* Commits are made under the author's identity (author and committer: his name and the e-mail of his GitHub account), also when an AI assistant writes them, without `Co-Authored-By` trailer. The assistant is credited in the `## CONTRIBUTORS` list of the `README.md` instead.
 
 ### Branches
 
