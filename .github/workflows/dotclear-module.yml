@@ -457,24 +457,27 @@ jobs:
           }
           $current = $m[1];
 
-          // Next version: given, today for date versions, else increment after first dot
+          // Next version: given, today for date versions (also old ones with a fourth number), else increment after first dot
           $version = trim((string) getenv('INPUT_VERSION'));
           if ($version === '') {
-            if (preg_match('/^\d{4}\.\d{2}\.\d{2}$/', $current)) {
+            if (preg_match('/^\d{4}\.\d{2}\.\d{2}(\.\d+)?$/', $current)) {
               $version = date('Y.m.d');
             } else {
               $parts   = explode('.', $current);
               $version = $parts[0] . '.' . ((int) ($parts[1] ?? 0) + 1);
             }
           }
-          if (!preg_match('/^[0-9][0-9A-Za-z.\-]*$/', $version)) {
-            $fail("Invalid version $version");
+          // Dotclear repository: 1 to 3 numbers separated by dots, no letter or suffix
+          if (!preg_match('/^[0-9]{1,9}(\.[0-9]{1,4}){0,2}$/', $version)) {
+            $fail("Invalid version $version: 1 to 3 numbers separated by dots (2.5 or 2026.11.15)");
           }
           if ($version === $current) {
             // Resume a failed release: current version without release yet
             exec('gh release view ' . escapeshellarg('v' . $version) . ' --repo ' . escapeshellarg((string) getenv('GITHUB_REPOSITORY')) . ' > /dev/null 2>&1', $out, $code);
             if ($code === 0) {
-              $fail("Release v$version already exists");
+              $fail(preg_match('/^\d{4}\.\d{2}\.\d{2}$/', $version)
+                ? "Release v$version already exists: one release a day for date versions"
+                : "Release v$version already exists");
             }
             file_put_contents((string) getenv('GITHUB_OUTPUT'), "version=$version\ncommit=false\n", FILE_APPEND);
             echo "Resume release of current version $version\n";
@@ -591,6 +594,11 @@ jobs:
             $dcmin = $m[1];
           }
           $type = preg_match('/[\'"]type[\'"]\s*=>\s*[\'"]theme[\'"]/', $define) ? 'theme' : 'plugin';
+          // Dotclear repository: 1 to 3 numbers separated by dots, no letter or suffix
+          if (!preg_match('/^[0-9]{1,9}(\.[0-9]{1,4}){0,2}$/', $version)) {
+            echo "::error::Invalid version $version: 1 to 3 numbers separated by dots (2.5 or 2026.11.15)\n";
+            exit(1);
+          }
           // Version of commit message must match _define.php
           $str = '(?:\'(?:[^\'\\\\]|\\\\.)*\'|"(?:[^"\\\\]|\\\\.)*")';
           if (preg_match('/registerModule\(\s*' . $str . '\s*,\s*' . $str . '\s*,\s*' . $str . '\s*,\s*[\'"]([^\'"]+)[\'"]/s', $define, $m) && $m[1] !== $version) {

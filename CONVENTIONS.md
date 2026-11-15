@@ -125,7 +125,9 @@ Commit subjects start with **one tag**, in lower case, for the main effect of th
 
 ### Versions and releases
 
-* Date versions (`2026.08.12`) become the date of the day (Europe/Paris);
+* Versions are 1 to 3 numbers separated by dots, without letter or suffix (`2.5`, `1.2.3`, `2026.08.12`):
+  the Dotclear repository refuses other versions.
+* Date versions (`2026.08.12`) become the date of the day (Europe/Paris), so one release a day;
   other versions are incremented after the first dot and shortened (`2.4.1` → `2.5`, `1.9` → `1.10`).
 * Releases are made by the [module workflow](https://github.com/JcDenis/gh2da/blob/master/README.md#dotclear-module-workflow) of gh2da:
   release button, CHANGELOG written from the commits since the last release, checks and tests, zip, Dotclear repository.
