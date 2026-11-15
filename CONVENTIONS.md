@@ -133,6 +133,9 @@ Commit subjects start with **one tag**, in lower case, for the main effect of th
 * A CHANGELOG entry lists what changed for the user of the module, not the history of the work:
   before a release, commits that cancel each other, are internal or duplicate one change are squashed,
   or the entry is cleaned after the release in a `[cosmetic] Clean CHANGELOG` commit.
+* Before a release, the user guide (`docs/fr/`), the admin help (`locales/{en,fr}/help/`) and the README are checked
+  against the commits since the last release (new or changed features, settings, interface labels, screenshots).
+  Outdated parts are fixed before the release, in a `[docs]` commit (`[cosmetic]` for a micro fix).
 * Modules can also be published for the Dotclear version in development, to be tested on dotclear-dev installations.
 
 ### Tests by the module workflow
