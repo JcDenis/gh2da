@@ -157,7 +157,8 @@ jobs:
             foreach (['LICENSE', 'LICENSE.md', 'LICENSE.txt', 'COPYING'] as $file) {
               $text = $zip->getFromName($module . '/' . $file);
               if (is_string($text) && $text !== '') {
-                $text = strtoupper(substr($text, 0, 2000));
+                // only the title: the GPL v2 preamble speaks of the Lesser GPL
+                $text = strtoupper(substr(ltrim($text), 0, 200));
                 $license = match (true) {
                   str_contains($text, 'GNU AFFERO GENERAL PUBLIC LICENSE') => str_contains($text, 'VERSION 3') ? 'agpl3' : 'agpl2',
                   str_contains($text, 'GNU LESSER GENERAL PUBLIC LICENSE') => 'lgpl2',
