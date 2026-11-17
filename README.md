@@ -66,7 +66,8 @@ Reusable workflow `.github/workflows/dotclear-module.yml` does for each Dotclear
   Summary is shown in the run page. Scripts are in `scripts/`.
 * **release button** : Actions > Dotclear module > Run workflow > check "Prepare and publish a release".
   Next version is today for date versions (2026.11.05), else increment after first dot (2.4.1 -> 2.5),
-  or the given version. `_define.php` (version and date), `dcstore.xml` and `CHANGELOG.md` (commits since last release, except those starting with `[cosmetic]` or `[ci]`) are updated
+  or the given version. Versions are 1 to 3 numbers separated by dots (Dotclear repository), so one release a day
+  for date versions. `_define.php` (version and date), `dcstore.xml` and `CHANGELOG.md` (commits since last release, except those starting with `[cosmetic]` or `[ci]`) are updated
   and committed in a single commit "Release x": the release adds no other commit.
 * **release** on a commit "Release x" pushed on default branch (or after release button) : checks and tests must pass,
   commit version must match `_define.php` version, then, for a commit pushed by hand, `_define.php` (date) and `dcstore.xml`
