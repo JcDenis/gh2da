@@ -694,6 +694,18 @@ jobs:
             echo "Nothing to commit"
           fi
 
+      # Files kept out of the archive are moved aside: the zip action expands its exclusions as shell globs,
+      # "<module>/docs/*" became "<module>/docs/fr" and only that folder entry was excluded, not its files.
+      - name: Set aside files kept out of the archive
+        shell: bash
+        run: |
+          mkdir -p "${{ runner.temp }}/outside-archive"
+          for file in docs CLAUDE.md CONCEPTION.md; do
+            if [[ -e $file ]]; then
+              mv "$file" "${{ runner.temp }}/outside-archive/"
+            fi
+          done
+
       - name: Create archive
         uses: thedoctor0/zip-release@0.7.6
         with:
@@ -701,7 +713,17 @@ jobs:
           directory: ..
           path: '${{ steps.repository.outputs.repository-name }}'
           filename: '${{ steps.dotclear.outputs.type }}-${{ steps.repository.outputs.repository-name }}.zip'
-          exclusions: '*.git* /*node_modules/* .editorconfig ${{ steps.repository.outputs.repository-name }}/docs/* ${{ steps.repository.outputs.repository-name }}/CLAUDE.md ${{ steps.repository.outputs.repository-name }}/CONCEPTION.md'
+          exclusions: '*.git* /*node_modules/* .editorconfig'
+
+      - name: Restore files kept out of the archive
+        if: always()
+        shell: bash
+        run: |
+          for file in docs CLAUDE.md CONCEPTION.md; do
+            if [[ -e "${{ runner.temp }}/outside-archive/$file" ]]; then
+              mv "${{ runner.temp }}/outside-archive/$file" .
+            fi
+          done
 
       - name: Find previous release
         id: previous
