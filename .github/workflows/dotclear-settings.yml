@@ -1,7 +1,8 @@
 # Apply same settings to all Dotclear modules repositories
 #
 # For all repositories of the owner using dotclear.yml workflow:
-# - add topics "dotclear" and "dotclear-plugin" (or "dotclear-theme"), keep others,
+# - add topics "dotclear", "plugin" (or "theme") and "dotclear-plugin" (or "dotclear-theme"), keep others,
+#   or, for a repository listed in topics.txt, set exactly these topics and the listed ones,
 # - delete head branches after pull request merge,
 # - disable projects, and wiki when it has no page.
 #
@@ -21,6 +22,12 @@ jobs:
   settings:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: topics.txt
+          sparse-checkout-cone-mode: false
+
       - name: Apply settings
         shell: bash
         env:
@@ -40,8 +47,13 @@ jobs:
             type=plugin
             gh api "repos/$OWNER/$repo/contents/_define.php" --jq '.content' | base64 -d | grep -qE "['\"]type['\"]\s*=>\s*['\"]theme['\"]" && type=theme
 
-            # Topics: add missing ones
-            topics=$(echo "$info" | jq -c --arg t "dotclear-$type" '(.topics + ["dotclear", $t]) | unique')
+            # Topics: those of topics.txt if listed (purge others), else add missing ones
+            listed=$(awk -v r="$repo" '$1 == r { $1 = ""; print }' topics.txt 2> /dev/null)
+            if [[ -n "$listed" ]]; then
+              topics=$(jq -c -n --arg t "$type" --arg l "$listed" '(["dotclear", $t, "dotclear-" + $t] + ($l | split(" ") | map(select(. != "")))) | unique')
+            else
+              topics=$(echo "$info" | jq -c --arg t "$type" '(.topics + ["dotclear", $t, "dotclear-" + $t]) | unique')
+            fi
             if [[ "$topics" != "$(echo "$info" | jq -c '.topics | unique')" ]]; then
               echo "$repo: topics -> $topics"
               if [[ "$DRY_RUN" != "true" ]]; then

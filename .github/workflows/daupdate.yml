@@ -122,13 +122,85 @@ jobs:
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_FOLLOWLOCATION => true, 
           ]);
-          $zip_cnt = chunk_split(base64_encode((string) curl_exec($ch)));
+          $zip_raw = (string) curl_exec($ch);
+          $zip_cnt = chunk_split(base64_encode($zip_raw));
           curl_close ($ch);
           if (strlen($zip_cnt) < 16) {
             file_put_contents(getenv('GITHUB_OUTPUT'), "message=Failed to get zip content\n", FILE_APPEND);
             echo 'Failed to get zip content';
             return;
           }
+
+          // Call a repository API endpoint that only needs the type
+          $repo_list = function (string $endpoint) use ($api_url, $token): array {
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+              CURLOPT_URL => $api_url . $endpoint,
+              CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $token],
+              CURLOPT_RETURNTRANSFER => true,
+              CURLOPT_POST => true,
+              CURLOPT_POSTFIELDS => ['type' => '${{ inputs.module_type }}'],
+            ]);
+            $rsp = json_decode((string) curl_exec($ch), true);
+            curl_close($ch);
+
+            return is_array($rsp) && is_array($rsp['content'] ?? null) ? $rsp['content'] : [];
+          };
+          $fold = fn (string $s): string => strtr(mb_strtolower($s), ['à' => 'a', 'â' => 'a', 'ä' => 'a', 'ç' => 'c', 'é' => 'e', 'è' => 'e', 'ê' => 'e', 'ë' => 'e', 'î' => 'i', 'ï' => 'i', 'ô' => 'o', 'ö' => 'o', 'ù' => 'u', 'û' => 'u', 'ü' => 'u', 'ÿ' => 'y', 'œ' => 'oe', 'æ' => 'ae']);
+
+          // License: recognized from the LICENSE file of the zip, only if the repository supports it
+          $license = '';
+          $tmp = tempnam(sys_get_temp_dir(), 'zip');
+          file_put_contents($tmp, $zip_raw);
+          $zip = new ZipArchive();
+          if ($zip->open($tmp) === true) {
+            foreach (['LICENSE', 'LICENSE.md', 'LICENSE.txt', 'COPYING'] as $file) {
+              $text = $zip->getFromName($module . '/' . $file);
+              if (is_string($text) && $text !== '') {
+                $text = strtoupper(substr($text, 0, 2000));
+                $license = match (true) {
+                  str_contains($text, 'GNU AFFERO GENERAL PUBLIC LICENSE') => str_contains($text, 'VERSION 3') ? 'agpl3' : 'agpl2',
+                  str_contains($text, 'GNU LESSER GENERAL PUBLIC LICENSE') => 'lgpl2',
+                  str_contains($text, 'GNU GENERAL PUBLIC LICENSE') => str_contains($text, 'VERSION 3') ? 'gpl3' : 'gpl2',
+                  str_contains($text, 'MIT LICENSE') => 'mit',
+                  str_contains($text, 'APACHE LICENSE') => 'apache',
+                  default => '',
+                };
+                break;
+              }
+            }
+            $zip->close();
+          }
+          unlink($tmp);
+          if ($license !== '' && !array_key_exists($license, $repo_list('licenses'))) {
+            $license = '';
+          }
+          echo 'License: ' . ($license ?: 'not found') . "\n";
+
+          // Tags: GitHub topics of the module, without the generic ones, that exist on the repository
+          // (topics have no accent: "developpement" gives the tag "développement")
+          $tags = [];
+          $ch = curl_init();
+          curl_setopt_array($ch, [
+            CURLOPT_URL => 'https://api.github.com/repos/' . $owner . '/' . $module . '/topics',
+            CURLOPT_HTTPHEADER => [
+              'Accept: application/vnd.github+json',
+              'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}',
+              'User-Agent: ' . $owner,
+            ],
+            CURLOPT_RETURNTRANSFER => true,
+          ]);
+          $topics = json_decode((string) curl_exec($ch), true);
+          curl_close($ch);
+          $topics = array_diff(is_array($topics['names'] ?? null) ? $topics['names'] : [], ['dotclear', 'plugin', 'theme', 'dotclear-plugin', 'dotclear-theme']);
+          if ($topics !== []) {
+            foreach ($repo_list('tags') as $tag) {
+              if (in_array(str_replace(' ', '-', $fold((string) $tag)), $topics, true)) {
+                $tags[] = (string) $tag;
+              }
+            }
+          }
+          echo 'Tags: ' . ($tags === [] ? 'none' : implode(', ', $tags)) . "\n";
 
           // Update Dotclear repository
           echo "Update contribution.\n";
@@ -144,6 +216,8 @@ jobs:
               'zip' => $zip_cnt,
               'readme_update' => '1',
               'category' => '${{ inputs.module_category }}',
+              'license' => $license,
+              'tags' => implode(',', $tags),
             ], fn ($v) => $v !== ''),
           ]);
           $rsp = json_decode((string) curl_exec($ch), true);

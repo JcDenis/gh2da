@@ -41,6 +41,14 @@ repository. daread.yml then launches daupdate.yml with the version `0` and the c
 a release zip of its type and is not yet on the repository. The repository user needs the permission to submit new
 modules by API, and a new module is always reviewed by the repository administrators.
 
+daupdate.yml also sends, when found:
+
+* the license, recognized from the `LICENSE` file of the zip (GNU GPL, LGPL, AGPL, MIT, Apache) and supported by the repository;
+* the tags, from the GitHub topics of the module (except `dotclear`, `plugin`, `theme`, `dotclear-plugin`, `dotclear-theme`)
+  that match a tag of the repository, accents aside (topic `developpement` for tag `développement`).
+
+Topics of the modules are listed in `topics.txt` and applied by the workflow `dotclear-settings.yml`.
+
 ## DOTCLEAR MODULE WORKFLOW
 
 Reusable workflow `.github/workflows/dotclear-module.yml` does for each Dotclear module (plugin or theme):

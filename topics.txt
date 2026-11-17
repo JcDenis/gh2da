@@ -1,0 +1,70 @@
+# GitHub topics of modules, besides dotclear, plugin (or theme) and dotclear-plugin (or dotclear-theme).
+# They give the tags of the module on the Dotclear repository: lower case, no accent (developpement for développement),
+# only those that already exist on the repository are used. One line per repository: <repository> <topic> <topic>...
+AboutTheAuthor2 information presentation widget
+activityReport administration notification statistique
+alias redirection lien
+ApiServer developpement
+arlequin presentation widget
+bloganniv information widget
+CategoriesPage navigation widget
+cinecturlink2 lien edition widget
+ClaudetteMcp administration ai mcp
+cleanURLs referencement redaction
+comListe navigation interaction
+construction administration
+countdown information widget
+CredentialsRecords administration
+dcAdvancedCleaner administration
+dcFilterDuplicate antispam
+dcLatestVersions information widget
+dcLog administration developpement
+disclaimer information
+Discussion interaction redaction
+Documentation presentation navigation
+DotclearWatch statistique administration
+emailNotification notification mail
+emailOptionnel interaction
+enhancePostContent edition redaction
+entryPhotoExifWidget photo metadonnee widget
+eventHandler edition geolocalisation widget
+fac syndication
+filesAlias lien redirection
+FrontendSession interaction widget
+FrontendWebauthn interaction
+httpPassword administration
+kUtRL lien redirection
+lastBlogUpdate information widget
+lastpostsExtend navigation widget
+lunarPhase information widget
+mail2log mail developpement
+moreCSS presentation
+myBlogNumbers statistique widget
+myUrlHandlers referencement navigation
+noodles presentation interaction
+Oauth2Connect interaction
+Orphelins administration lien
+pacKman developpement
+PenseBete administration
+periodical redaction
+pollsFactory interaction widget
+postExpired redaction
+postInfoWidget information metadonnee widget
+postslistOptions administration
+postWidgetText redaction widget
+Proofreading redaction
+rateIt interaction widget
+ReadingTracking interaction notification
+RestrictedReading interaction
+saba navigation widget
+shortArchives navigation widget
+simplyFavicon presentation
+SmtpMailer mail
+TelegramNotifier notification
+templator presentation developpement
+testMail mail developpement
+tinyPacker developpement
+topWriter statistique widget
+translater developpement
+whiteListCom antispam
+zoneclearFeedServer syndication widget
