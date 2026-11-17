@@ -20,9 +20,14 @@ on:
         required: true
         type: string
       module_version:
-        description: The module current version
+        description: The module current version (0 for a new module)
         required: true
         type: string
+      module_category:
+        description: The category ID, required for a new module
+        required: false
+        type: string
+        default: ''
 
 jobs:
   version:
@@ -134,11 +139,12 @@ jobs:
             CURLOPT_HEADER => false,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => [
+            CURLOPT_POSTFIELDS => array_filter([
               'type' => '${{ inputs.module_type }}',
               'zip' => $zip_cnt,
               'readme_update' => '1',
-            ],
+              'category' => '${{ inputs.module_category }}',
+            ], fn ($v) => $v !== ''),
           ]);
           $rsp = json_decode((string) curl_exec($ch), true);
           curl_close($ch);
@@ -164,5 +170,5 @@ jobs:
           message: |
             __Dotclear repository contribution update__
             - ${{ inputs.api_url }}
-            - Module: ${{ steps.dialog.outputs.module }} ${{ steps.dialog.outputs.version }} 
+            - Module: ${{ steps.dialog.outputs.module }} ${{ steps.dialog.outputs.version }}${{ inputs.module_version == '0' && ' (new)' || '' }}
             - Response: ${{ steps.dialog.outputs.message }}

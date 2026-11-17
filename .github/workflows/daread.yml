@@ -15,6 +15,11 @@ on:
         options:
         - plugin
         - theme
+      new_modules:
+        description: New modules to add, as module_id:category_id separated by commas (empty for none)
+        required: false
+        type: string
+        default: ''
 
 jobs:
   read_da:
@@ -70,42 +75,92 @@ jobs:
           }
           $i = 0;
           $res = [];
+          $launch = function (string $module, string $version, string $category = ''): bool {
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+              CURLOPT_URL => 'https://api.github.com/repos/${{ github.repository }}/actions/workflows/daupdate.yml/dispatches',
+              CURLOPT_HTTPHEADER => [
+                'Accept: application/vnd.github.v3+json',
+                'Authorization: Bearer ${{ secrets.USER_TOKEN }}',
+                'User-Agent: ${{ github.repository_owner }}',
+              ],
+              CURLOPT_HEADER => false,
+              CURLOPT_RETURNTRANSFER => true,
+              CURLOPT_POST => true,
+              CURLOPT_POSTFIELDS => json_encode([
+                'ref' => 'master',
+                'inputs' => [
+                  'api_url' => '${{ inputs.api_url }}',
+                  'module_type' => '${{ inputs.module_type }}',
+                  'module_id' => $module,
+                  'module_version' => $version,
+                  'module_category' => $category,
+                ],
+              ]),
+            ]);
+            $rsp = curl_exec($ch);
+            curl_close($ch);
+            if ($rsp === false) {
+              echo "Failed to launch contribution update of " . $module . "\n";
+
+              return false;
+            }
+            echo $rsp;
+
+            return true;
+          };
+          $known = array_map('strtolower', array_keys($rsp['content']));
           foreach($rsp['content'] as $module => $info) {
             sleep(5);
             echo 'Found ' . $info['status_id'] . ' module ' . $module . ' ' . $info['version'] . "\n";
-            if ($info['status_id'] == 'approved') {
-              $ch = curl_init();
-              curl_setopt_array($ch, [
-                CURLOPT_URL => 'https://api.github.com/repos/${{ github.repository }}/actions/workflows/daupdate.yml/dispatches',
-                CURLOPT_HTTPHEADER => [
-                  'Accept: application/vnd.github.v3+json',
-                  'Authorization: Bearer ${{ secrets.USER_TOKEN }}',
-                  'User-Agent: ${{ github.repository_owner }}',
-                ],
-                CURLOPT_HEADER => false,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_POST => true,
-                CURLOPT_POSTFIELDS => json_encode([
-                  'ref' => 'master',
-                  'inputs' => [
-                    'api_url' => '${{ inputs.api_url }}',
-                    'module_type' => '${{ inputs.module_type }}',
-                    'module_id' => $module,
-                    'module_version' => $info['version'],
-                  ],
-                ]),
-              ]);
-              if (($rsp = curl_exec($ch)) === false) {
-                echo "Failed to launch contribution update\n";
-              } else {
-                //echo 'Launch update of ${{ inputs.module_type }} ' . $module . ' ' .$info['version'] . " at ${{ inputs.api_url }} \n";
-                echo $rsp;
-                $i++;
-              }
-              curl_close($ch);
+            if ($info['status_id'] == 'approved' && $launch((string) $module, (string) $info['version'])) {
+              $i++;
+            }
+          }
+
+          // New modules, only those given in input, with their category
+          $n = 0;
+          foreach (explode(',', '${{ inputs.new_modules }}') as $line) {
+            $line = trim($line);
+            if ($line === '') {
+              continue;
+            }
+            [$module, $category] = array_map('trim', explode(':', $line, 2) + [1 => '']);
+            if (!preg_match('/^[a-zA-Z0-9_]+$/', $module) || !preg_match('/^[0-9]+$/', $category)) {
+              echo 'Bad new module entry ' . $line . "\n";
+              file_put_contents(getenv('GITHUB_STEP_SUMMARY'), '* Bad new module entry ' . $line . "\n", FILE_APPEND);
+              continue;
+            }
+            if (in_array(strtolower($module), $known, true)) {
+              echo 'Module ' . $module . " already on the repository\n";
+              continue;
+            }
+            // only modules of this type: the release must have a zip of this type
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+              CURLOPT_URL => 'https://api.github.com/repos/${{ github.repository_owner }}/' . $module . '/releases/latest',
+              CURLOPT_HTTPHEADER => [
+                'Accept: application/vnd.github.v3+json',
+                'Authorization: Bearer ${{ secrets.USER_TOKEN }}',
+                'User-Agent: ${{ github.repository_owner }}',
+              ],
+              CURLOPT_RETURNTRANSFER => true,
+            ]);
+            $release = json_decode((string) curl_exec($ch), true);
+            curl_close($ch);
+            $assets = is_array($release) && isset($release['assets']) ? array_column($release['assets'], 'name') : [];
+            if (!in_array('${{ inputs.module_type }}-' . $module . '.zip', $assets, true)) {
+              echo 'Module ' . $module . " has no ${{ inputs.module_type }} release\n";
+              continue;
+            }
+            sleep(5);
+            echo 'Add new ${{ inputs.module_type }} ' . $module . ' in category ' . $category . "\n";
+            if ($launch($module, '0', $category)) {
+              $n++;
             }
           }
           file_put_contents(getenv('GITHUB_STEP_SUMMARY'), "Found " . $i . " contributions to check.\n", FILE_APPEND);
+          file_put_contents(getenv('GITHUB_STEP_SUMMARY'), "Launch " . $n . " new modules.\n", FILE_APPEND);
 
       - name: Send Telegram Message Ok
         uses: appleboy/telegram-action@v1.1.2
@@ -116,4 +171,4 @@ jobs:
           message: |
             __Dotclear repository contribution update__
             - ${{ inputs.api_url }}
-            - Read ${{ inputs.module_type }} contributions
+            - Read ${{ inputs.module_type }} contributions

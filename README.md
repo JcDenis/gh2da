@@ -35,6 +35,12 @@ Workflow is chunk in 3 parts:
 dalaunch.yml starts every day and launch daread.yml for plugins and for themes, daread.yml launch daupdate.yml for each module found on the repository.
 updatedc.yml (dotclear.org) and updatewatch.yml (repo.dotclear.watch) start dalaunch.yml every day for each repository.
 
+New modules are never added automatically. To add some, launch dalaunch.yml (or daread.yml) by hand with the input
+`new_modules`: a list of `module_id:category_id` separated by commas, the category ID being the one of the target
+repository. daread.yml then launches daupdate.yml with the version `0` and the category for each listed module that has
+a release zip of its type and is not yet on the repository. The repository user needs the permission to submit new
+modules by API, and a new module is always reviewed by the repository administrators.
+
 ## DOTCLEAR MODULE WORKFLOW
 
 Reusable workflow `.github/workflows/dotclear-module.yml` does for each Dotclear module (plugin or theme):
