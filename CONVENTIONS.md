@@ -27,6 +27,8 @@ The `CLAUDE.md` of a module takes precedence over this file for that module.
 
 ### Code
 
+* Core reference: [`dotclear/README.md`](https://github.com/JcDenis/gh2da/blob/master/dotclear/README.md)
+  (architecture, main APIs), with the API changes per version in `dotclear/CHANGES.md` and the behaviors in `dotclear/BEHAVIORS.md`.
 * Dotclear 2.39+ API: `App::`, `My extends MyPlugin` (or `MyTheme`), `TraitProcess` (`init()`, `process()`, `render()`),
   `Dotclear\Helper\Html\Form` components, `declare(strict_types=1)` and typed code.
 * **The code follows the Dotclear version required in `_define.php`** (`['core', 'x.y']`): no API newer than this version,
