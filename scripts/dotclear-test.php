@@ -20,7 +20,8 @@
  * Exit with 1 if a page fails (HTTP status >= 500 or PHP error in page).
  * A core page (not a module page) that fails is checked again with the plugin disabled
  * (_disabled file in the container): if it also fails without the plugin, it is a Dotclear issue,
- * reported as a warning (DOCKER_CONTAINER, default "dotclear").
+ * reported as a warning (DOCKER_CONTAINER, default "dotclear", or local module path MODULE_INSTALLED
+ * when Dotclear runs without Docker, see dotclear-local.php).
  *
  * Second mode, after pages: php dotclear-test.php logs <php log file> [<deprecated log file>]
  * Reports PHP errors from server logs: errors in module files fail, others are warnings.
@@ -249,10 +250,15 @@ foreach ($public as $label => $path) {
 // Core pages that failed: check them again without the plugin, a failure without it is a Dotclear issue
 if ($retry !== []) {
     $container = $env('DOCKER_CONTAINER', 'dotclear');
-    $disabled  = '/var/www/dotclear/plugins/' . $id . '/_disabled';
+    $local     = $env('MODULE_INSTALLED');
+    $disabled  = $local !== '' ? $local . '/_disabled' : '/var/www/dotclear/plugins/' . $id . '/_disabled';
     $rc        = 1;
     if ($type === 'plugin') {
-        exec('docker exec ' . escapeshellarg($container) . ' touch ' . escapeshellarg($disabled) . ' 2>&1', $o, $rc);
+        if ($local !== '') {
+            $rc = touch($disabled) ? 0 : 1;
+        } else {
+            exec('docker exec ' . escapeshellarg($container) . ' touch ' . escapeshellarg($disabled) . ' 2>&1', $o, $rc);
+        }
     }
     foreach ($retry as $label => [$url, $row, $errors]) {
         if ($rc !== 0) {
@@ -279,7 +285,11 @@ if ($retry !== []) {
                 }
             }
         }
-        exec('docker exec ' . escapeshellarg($container) . ' rm -f ' . escapeshellarg($disabled));
+        if ($local !== '') {
+            @unlink($disabled);
+        } else {
+            exec('docker exec ' . escapeshellarg($container) . ' rm -f ' . escapeshellarg($disabled));
+        }
     }
 }
 

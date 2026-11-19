@@ -78,6 +78,18 @@ Reusable workflow `.github/workflows/dotclear-module.yml` does for each Dotclear
 * **branches cleanup** on push to default branch : branches merged into default branch are deleted.
 * **Telegram messages** : release published or failed, release preparation failed, branches deleted.
 
+**Local test in one command**, without Docker: `scripts/dotclear-local.php` runs the same checks and tests from a module directory
+(PHP lint, PHPStan, fresh Dotclear on SQLite served by the PHP built-in server, pages browsed with `dotclear-test.php`,
+module enabled, PHP errors of server log). It only needs PHP (with curl, pdo_sqlite, mbstring, intl) and git,
+everything else (Dotclear, dependencies, PHPStan) comes from GitHub and is cached in `~/.cache/gh2da` (or `$GH2DA_CACHE`).
+
+    cd myModule && php ../gh2da/scripts/dotclear-local.php
+    php gh2da/scripts/dotclear-local.php myModule --ref=master      # all steps on Dotclear master
+    php gh2da/scripts/dotclear-local.php myModule --skip=phpstan --serve --port=8080   # then keep the site running
+
+Like CI, PHPStan runs on the Dotclear version required in `_define.php` and pages on the latest stable release
+(master if required). Admin login: `admin` / `Dotclear-Local-2026`. Options: `php scripts/dotclear-local.php --help`.
+
 Each module only needs the small caller workflow `templates/dotclear.yml` copied to `.github/workflows/dotclear.yml`
 and secrets BOT_GPG_KEY, BOT_GPG_PASS, TELEGRAM_ID, TELEGRAM_TOKEN.
 

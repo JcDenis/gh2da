@@ -84,7 +84,10 @@ The `CLAUDE.md` of a module takes precedence over this file for that module.
   A module requiring a Dotclear version not yet released is tested on a Dotclear `master` checkout.
 * Dotclear includes compiled templates with `@include`, which hides PHP errors of public pages:
   remove that `@` locally while debugging public pages.
-* Local test site: Dotclear on SQLite with `php -S`, modules symlinked in `plugins/`.
+* Before asking the author to test, run the module workflow checks and tests locally in one command:
+  `php gh2da/scripts/dotclear-local.php <module directory>` (see gh2da README). It needs only PHP and git.
+  Add `--serve` to keep the test site running for manual checks or screenshots.
+* Local test site by hand: Dotclear on SQLite with `php -S`, modules symlinked in `plugins/`.
   * Run it with `PHP_CLI_SERVER_WORKERS=4`: some pages call the site itself.
   * `Http::head()` sends an invalid header with the `cli-server` SAPI, which empties JSON responses:
     for local tests only, treat `cli-server` like `cgi` in `Http::head()`.
