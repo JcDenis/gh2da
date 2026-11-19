@@ -101,6 +101,14 @@ major updates are kept open and listed in the weekly digest. Other repositories 
 Each module points to it from its own short `CLAUDE.md` (model in `templates/CLAUDE.md`).
 Other authors can use it as a base.
 
+## DOTCLEAR CORE REFERENCE
+
+[`dotclear/`](https://github.com/JcDenis/gh2da/blob/master/dotclear/README.md) holds a reference of the Dotclear core
+for modules authors and AI assistants: architecture, module anatomy and main APIs (`README.md`), API changes between
+versions (`CHANGES.md`, from 2.39 to the development version) and the list of behaviors (`BEHAVIORS.md`).
+`scripts/dotclear-api.php` (public API dump of a Dotclear tree, to diff two versions) and `scripts/dotclear-behaviors.php`
+(regenerates `BEHAVIORS.md`) keep it up to date.
+
 ## LICENSE
 
 Copyright Jean-Christian Paul Denis
