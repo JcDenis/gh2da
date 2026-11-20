@@ -109,11 +109,36 @@ jobs:
 
             return true;
           };
+          // Only modules of public repositories go to the Dotclear repository
+          // (private repositories keep their releases and zips on GitHub only)
+          $public = function (string $module): bool {
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+              CURLOPT_URL => 'https://api.github.com/repos/${{ github.repository_owner }}/' . $module,
+              CURLOPT_HTTPHEADER => [
+                'Accept: application/vnd.github.v3+json',
+                'Authorization: Bearer ${{ secrets.USER_TOKEN }}',
+                'User-Agent: ${{ github.repository_owner }}',
+              ],
+              CURLOPT_RETURNTRANSFER => true,
+            ]);
+            $repo = json_decode((string) curl_exec($ch), true);
+            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            if ($code === 200 && is_array($repo) && ($repo['private'] ?? true) === false) {
+              return true;
+            }
+            $reason = $code === 200 ? 'private repository' : 'repository not found or not readable (HTTP ' . $code . ')';
+            echo 'Module ' . $module . ' skipped: ' . $reason . "\n";
+            file_put_contents(getenv('GITHUB_STEP_SUMMARY'), '* Module ' . $module . ' skipped: ' . $reason . "\n", FILE_APPEND);
+
+            return false;
+          };
           $known = array_map('strtolower', array_keys($rsp['content']));
           foreach($rsp['content'] as $module => $info) {
             sleep(5);
             echo 'Found ' . $info['status_id'] . ' module ' . $module . ' ' . $info['version'] . "\n";
-            if ($info['status_id'] == 'approved' && $launch((string) $module, (string) $info['version'])) {
+            if ($info['status_id'] == 'approved' && $public((string) $module) && $launch((string) $module, (string) $info['version'])) {
               $i++;
             }
           }
@@ -133,6 +158,9 @@ jobs:
             }
             if (in_array(strtolower($module), $known, true)) {
               echo 'Module ' . $module . " already on the repository\n";
+              continue;
+            }
+            if (!$public($module)) {
               continue;
             }
             // only modules of this type: the release must have a zip of this type

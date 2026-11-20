@@ -41,6 +41,10 @@ repository. daread.yml then launches daupdate.yml with the version `0` and the c
 a release zip of its type and is not yet on the repository. The repository user needs the permission to submit new
 modules by API, and a new module is always reviewed by the repository administrators.
 
+Only modules of public repositories are sent to the Dotclear repository: daread.yml and daupdate.yml both skip
+a module whose repository is private (or can not be read), with a line in the run summary. A private module still gets
+its checks, tests, release and zip on GitHub from its own workflow.
+
 daupdate.yml also sends, when found:
 
 * the license, recognized from the `LICENSE` file of the zip (GNU GPL, LGPL, AGPL, MIT, Apache) and supported by the repository;
