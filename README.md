@@ -35,11 +35,22 @@ Workflow is chunk in 3 parts:
 dalaunch.yml starts every day and launch daread.yml for plugins and for themes, daread.yml launch daupdate.yml for each module found on the repository.
 updatedc.yml (dotclear.org) and updatewatch.yml (repo.dotclear.watch) start dalaunch.yml every day for each repository.
 
-New modules are never added automatically. To add some, launch dalaunch.yml (or daread.yml) by hand with the input
-`new_modules`: a list of `module_id:category_id` separated by commas, the category ID being the one of the target
-repository. daread.yml then launches daupdate.yml with the version `0` and the category for each listed module that has
-a release zip of its type and is not yet on the repository. The repository user needs the permission to submit new
-modules by API, and a new module is always reviewed by the repository administrators.
+New modules are added automatically from `categories.txt`: each line gives a module and one or more words
+(`<repository> <word> [<word>...]`). When a module of this list is not yet on the repository and has a release zip of
+the type read, daread.yml searches its words, accents and case aside, in the titles of the categories of the target
+repository (API endpoint `categories`) and launches daupdate.yml with the version `0` and the first category found.
+Category titles differ from one repository to another, so give a word for each one (ex: `structure design`: Structure on
+dotclear.org, Design… on repo.dotclear.watch). A module without category found is not submitted and is listed in the
+summary of the run; `-` instead of words, or no line, means the module is never submitted as new.
+
+The input `new_modules` of dalaunch.yml (or daread.yml) adds modules by hand: a list of `module_id:category_id`
+separated by commas, the category ID being the one of the target repository; it takes precedence over `categories.txt`.
+The input `dry_run` only lists in the summary of the run the new modules that would be submitted, with their category,
+without submitting them (existing modules are still checked and updated).
+
+The repository user needs the permission to submit new modules by API (or to be super admin), and a new module is
+always reviewed by the repository administrators. Once on the repository, a module keeps its category: updates send no
+category, the category of its current version is kept, even when changed by an administrator.
 
 daupdate.yml also sends, when found:
 
@@ -48,6 +59,7 @@ daupdate.yml also sends, when found:
   that match a tag of the repository, accents aside (topic `developpement` for tag `développement`).
 
 Topics of the modules are listed in `topics.txt` and applied by the workflow `dotclear-settings.yml`.
+A new module needs a line in `topics.txt` and in `categories.txt`.
 
 ## DOTCLEAR MODULE WORKFLOW
 

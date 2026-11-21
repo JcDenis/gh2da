@@ -20,12 +20,23 @@ on:
         required: false
         type: string
         default: ''
+      dry_run:
+        description: Only list the new modules that would be submitted, without submitting them
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   read_da:
     name: Read Dotclear repository contributions
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout categories list
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: categories.txt
+          sparse-checkout-cone-mode: false
+
       - name: Get user contributions
         id: dialog
         shell: php {0}
@@ -118,8 +129,14 @@ jobs:
             }
           }
 
-          // New modules, only those given in input, with their category
-          $n = 0;
+          // New modules: those given in input (module_id:category_id), then those of categories.txt that are not on the repository
+          $dry_run = '${{ inputs.dry_run }}' === 'true';
+          $summary = function (string $line): void {
+            echo $line . "\n";
+            file_put_contents(getenv('GITHUB_STEP_SUMMARY'), '* ' . $line . "\n", FILE_APPEND);
+          };
+          $fold = fn (string $s): string => strtr(mb_strtolower($s), ['à' => 'a', 'â' => 'a', 'ä' => 'a', 'ç' => 'c', 'é' => 'e', 'è' => 'e', 'ê' => 'e', 'ë' => 'e', 'î' => 'i', 'ï' => 'i', 'ô' => 'o', 'ö' => 'o', 'ù' => 'u', 'û' => 'u', 'ü' => 'u', 'ÿ' => 'y', 'œ' => 'oe', 'æ' => 'ae']);
+          $new = [];
           foreach (explode(',', '${{ inputs.new_modules }}') as $line) {
             $line = trim($line);
             if ($line === '') {
@@ -127,10 +144,55 @@ jobs:
             }
             [$module, $category] = array_map('trim', explode(':', $line, 2) + [1 => '']);
             if (!preg_match('/^[a-zA-Z0-9_]+$/', $module) || !preg_match('/^[0-9]+$/', $category)) {
-              echo 'Bad new module entry ' . $line . "\n";
-              file_put_contents(getenv('GITHUB_STEP_SUMMARY'), '* Bad new module entry ' . $line . "\n", FILE_APPEND);
+              $summary('Bad new module entry ' . $line);
               continue;
             }
+            $new[strtolower($module)] = [$module, $category];
+          }
+
+          // categories.txt: <repository> <word> [<word>...], words searched in the categories titles of the repository
+          $repo_categories = null;
+          $file = getenv('GITHUB_WORKSPACE') . '/categories.txt';
+          foreach (is_file($file) ? (array) file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : [] as $line) {
+            $words = preg_split('/\s+/', trim((string) $line)) ?: [];
+            $module = (string) array_shift($words);
+            if ($module === '' || str_starts_with($module, '#') || isset($new[strtolower($module)]) || in_array(strtolower($module), $known, true)) {
+              continue;
+            }
+            if (!preg_match('/^[a-zA-Z0-9_]+$/', $module) || $words === [] || $words === ['-']) {
+              continue;
+            }
+            // categories of the repository, read once
+            if ($repo_categories === null) {
+              $repo_categories = [];
+              $ch = curl_init();
+              curl_setopt_array($ch, [
+                CURLOPT_URL => $api_url . 'categories',
+                CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $token],
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => ['type' => '${{ inputs.module_type }}'],
+              ]);
+              $rsp = json_decode((string) curl_exec($ch), true);
+              curl_close($ch);
+              if (is_array($rsp) && isset($rsp['content']) && is_array($rsp['content'])) {
+                $repo_categories = $rsp['content'];
+              }
+            }
+            $category = '';
+            foreach ($words as $word) {
+              foreach ($repo_categories as $cat_id => $cat_title) {
+                if (str_contains($fold((string) $cat_title), $fold($word))) {
+                  $category = (string) $cat_id;
+                  break 2;
+                }
+              }
+            }
+            $new[strtolower($module)] = [$module, $category];
+          }
+
+          $n = 0;
+          foreach ($new as [$module, $category]) {
             if (in_array(strtolower($module), $known, true)) {
               echo 'Module ' . $module . " already on the repository\n";
               continue;
@@ -153,8 +215,16 @@ jobs:
               echo 'Module ' . $module . " has no ${{ inputs.module_type }} release\n";
               continue;
             }
+            if ($category === '') {
+              $summary('New ${{ inputs.module_type }} ' . $module . ' not submitted: no category of categories.txt found on the repository');
+              continue;
+            }
+            if ($dry_run) {
+              $summary('New ${{ inputs.module_type }} ' . $module . ' would be submitted in category ' . $category . ' (' . ($repo_categories[$category] ?? 'from input') . ')');
+              continue;
+            }
             sleep(5);
-            echo 'Add new ${{ inputs.module_type }} ' . $module . ' in category ' . $category . "\n";
+            $summary('Add new ${{ inputs.module_type }} ' . $module . ' in category ' . $category);
             if ($launch($module, '0', $category)) {
               $n++;
             }
