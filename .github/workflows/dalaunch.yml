@@ -13,6 +13,11 @@ on:
         required: false
         type: string
         default: ''
+      dry_run:
+        description: Only list the new modules that would be submitted, without submitting them
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   launch:
@@ -28,14 +33,14 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: Bearer ${{ secrets.USER_TOKEN }}" \
             https://api.github.com/repos/${{ github.repository }}/actions/workflows/daread.yml/dispatches \
-            -d '{"ref":"master","inputs":{"api_url":"${{ inputs.api_url }}","module_type":"plugin","new_modules":"${{ inputs.new_modules }}"}}'
+            -d '{"ref":"master","inputs":{"api_url":"${{ inputs.api_url }}","module_type":"plugin","new_modules":"${{ inputs.new_modules }}","dry_run":"${{ inputs.dry_run }}"}}'
           echo "Launch themes update"
           curl \
             -X POST \
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: Bearer ${{ secrets.USER_TOKEN }}" \
             https://api.github.com/repos/${{ github.repository }}/actions/workflows/daread.yml/dispatches \
-            -d '{"ref":"master","inputs":{"api_url":"${{ inputs.api_url }}","module_type":"theme","new_modules":"${{ inputs.new_modules }}"}}'
+            -d '{"ref":"master","inputs":{"api_url":"${{ inputs.api_url }}","module_type":"theme","new_modules":"${{ inputs.new_modules }}","dry_run":"${{ inputs.dry_run }}"}}'
 
       - name: Send Telegram Message Ok
         uses: appleboy/telegram-action@v1.1.2

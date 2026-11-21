@@ -1,0 +1,73 @@
+# Category of the modules on the Dotclear repositories, used when a module is not yet on a repository (new module).
+# One line per repository: <repository> <word> [<word>...]. The words are searched, accents and case aside, in the titles
+# of the categories of the target repository (API endpoint categories): the first word found in a title gives the category,
+# so give a word for each repository (ex: structure on dotclear.org, design on repo.dotclear.watch). Titles are not
+# translated: give words in French. Use - to never submit a module as new. A module not listed here is never submitted
+# as new, except by the input new_modules of dalaunch.yml or daread.yml.
+AboutTheAuthor2 structure design
+activityReport administration securite
+alias contenu edition
+ApiServer administration securite
+arlequin structure design
+bloganniv structure design
+CategoriesPage structure design
+cinecturlink2 contenu edition
+ClaudetteMcp administration securite
+cleanURLs referencement
+comListe structure design
+construction administration securite
+countdown structure design
+CredentialsRecords administration securite
+dcAdvancedCleaner administration securite
+dcFilterDuplicate securite
+dcLatestVersions structure design
+dcLog administration securite
+disclaimer structure design
+Discussion echange
+Documentation structure design
+DotclearWatch referencement
+emailNotification echange
+emailOptionnel echange
+enhancePostContent contenu edition
+entryPhotoExifWidget contenu edition
+eventHandler contenu edition
+fac echange
+filesAlias contenu edition
+FrontendSession echange
+FrontendWebauthn echange
+httpPassword administration securite
+kUtRL contenu edition
+lastBlogUpdate structure design
+lastpostsExtend structure design
+lunarPhase structure design
+mail2log echange
+moreCSS structure design
+myBlogNumbers referencement
+myUrlHandlers referencement
+noodles structure design
+Oauth2Connect echange
+Orphelins administration securite
+pacKman administration securite
+PenseBete administration securite
+periodical contenu edition
+pollsFactory echange
+postExpired contenu edition
+postInfoWidget structure design
+postslistOptions administration securite
+postWidgetText contenu edition
+Proofreading contenu edition
+rateIt echange
+ReadingTracking echange
+RestrictedReading echange
+saba structure design
+shortArchives structure design
+simplyFavicon structure design
+SmtpMailer echange
+TelegramNotifier echange
+templator structure design
+testMail echange
+tinyPacker administration securite
+topWriter referencement
+translater administration securite
+whiteListCom securite
+zoneclearFeedServer echange
