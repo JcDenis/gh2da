@@ -59,7 +59,11 @@ daupdate.yml also sends, when found:
   that match a tag of the repository, accents aside (topic `developpement` for tag `développement`).
 
 Topics of the modules are listed in `topics.txt` and applied by the workflow `dotclear-settings.yml`.
-A new module needs a line in `topics.txt` and in `categories.txt`.
+A new module needs a line in `topics.txt` and in `categories.txt`. The workflow `dotclear-new-modules.yml` (every day)
+finds the modules repositories (public, not archived, with `.github/workflows/dotclear.yml`) missing from these files and
+opens a pull request (branch `new-modules`) that adds them: current topics of the repository, and category words guessed
+from them (`-` when none, and always for a theme). Check and merge it: the module is then submitted as new by the next
+run of dalaunch.yml. A Telegram message tells when the pull request changes.
 
 ## DOTCLEAR MODULE WORKFLOW
 

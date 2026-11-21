@@ -1,0 +1,160 @@
+# Find new Dotclear modules repositories and propose them in topics.txt and categories.txt
+#
+# A module repository is a public, not archived repository of the owner with workflow .github/workflows/dotclear.yml
+# (same rule as dotclear-settings.yml). For each one missing from topics.txt or categories.txt, a pull request
+# (branch new-modules) adds the missing lines:
+# - topics.txt: the current topics of the repository, without the generic ones;
+# - categories.txt: words guessed from the first topic that gives one, or - (never submitted as new) when none does,
+#   and always - for a theme. Check them before merging: once merged, the module is submitted as new by the next run
+#   of dalaunch.yml (if it has a release zip), and waits for the review of the repository administrators.
+# The pull request is updated on each run while it is open. A Telegram message is sent when the proposal changes.
+#
+# Requires secret USER_TOKEN (read all repositories, write this repository and its pull requests).
+
+name: Dotclear new modules
+
+on:
+  schedule:
+    # every day, before updatewatch.yml (02:22 UTC)
+    - cron: '43 1 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Only show the new modules, without pull request'
+        type: boolean
+        default: false
+
+jobs:
+  new_modules:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          token: ${{ secrets.USER_TOKEN }}
+
+      - name: Find new modules
+        id: find
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.USER_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          if ! repos=$(gh api --paginate "users/$OWNER/repos?per_page=100&type=owner" --jq '.[] | select(.archived == false and .private == false) | .name'); then
+            echo "::error::Can not list repositories, check secret USER_TOKEN"
+            exit 1
+          fi
+
+          # Category words from the first topic that gives some (same table as the first filling of categories.txt)
+          guess() {
+            for topic in "$@"; do
+              case "$topic" in
+                administration|developpement|ai|mcp) echo "administration securite"; return ;;
+                antispam|securite) echo "securite"; return ;;
+                statistique|referencement) echo "referencement"; return ;;
+                mail|notification|syndication|interaction) echo "echange"; return ;;
+                edition|redaction|lien|photo|metadonnee|redirection) echo "contenu edition"; return ;;
+                presentation|navigation|information|widget) echo "structure design"; return ;;
+              esac
+            done
+            echo "-"
+          }
+
+          found=()
+          for repo in $repos; do
+            in_topics=$(awk -v r="$repo" '$1 == r { print "1" }' topics.txt)
+            in_categories=$(awk -v r="$repo" '$1 == r { print "1" }' categories.txt)
+            [[ -n "$in_topics" && -n "$in_categories" ]] && continue
+            gh api "repos/$OWNER/$repo/contents/.github/workflows/dotclear.yml" --silent 2> /dev/null || continue
+
+            type=plugin
+            gh api "repos/$OWNER/$repo/contents/_define.php" --jq '.content' 2> /dev/null | base64 -d | grep -qE "['\"]type['\"]\s*=>\s*['\"]theme['\"]" && type=theme
+            topics=$(gh api "repos/$OWNER/$repo/topics" --jq '.names[] | select(. != "dotclear" and . != "plugin" and . != "theme" and . != "dotclear-plugin" and . != "dotclear-theme")' | tr '\n' ' ' | sed 's/ *$//')
+            if [[ "$type" == "theme" ]]; then
+              words="-"
+            else
+              # shellcheck disable=SC2086
+              words=$(guess $topics)
+            fi
+
+            if [[ -z "$in_topics" ]]; then
+              echo "$repo${topics:+ $topics}" >> topics.txt
+            fi
+            if [[ -z "$in_categories" ]]; then
+              echo "$repo $words" >> categories.txt
+            fi
+            echo "New $type $repo: topics '${topics}', category '${words}'"
+            found+=("$repo ($type, topics: ${topics:-none}, category: $words)")
+          done
+
+          if [[ ${#found[@]} -eq 0 ]]; then
+            echo "No new module"
+            echo "No new module" >> "$GITHUB_STEP_SUMMARY"
+            echo "count=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Keep the lists sorted, comments first
+          for file in topics.txt categories.txt; do
+            { grep '^#' "$file" || true; grep -v '^#' "$file" | grep -v '^\s*$' | LC_ALL=C sort -f; } > "$file.tmp"
+            mv "$file.tmp" "$file"
+          done
+
+          {
+            echo "New modules:"
+            for line in "${found[@]}"; do echo "* $line"; done
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+          {
+            echo "count=${#found[@]}"
+            echo "list<<EOF"
+            for line in "${found[@]}"; do echo "- $line"; done
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Pull request
+        id: pr
+        if: ${{ steps.find.outputs.count != '0' && inputs.dry_run != true }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.USER_TOKEN }}
+          LIST: ${{ steps.find.outputs.list }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B new-modules
+          git add topics.txt categories.txt
+          git commit -q -m "[ci] Add new modules to topics.txt and categories.txt"
+
+          # Push only when the proposal changed
+          if git fetch -q origin new-modules 2> /dev/null && git diff --quiet FETCH_HEAD HEAD -- topics.txt categories.txt; then
+            echo "Pull request already up to date"
+            echo "changed=0" >> "$GITHUB_OUTPUT"
+          else
+            git push -q -f origin new-modules
+            echo "changed=1" >> "$GITHUB_OUTPUT"
+          fi
+
+          body=$(printf '%s\n\n%s\n\n%s\n' \
+            "New Dotclear modules repositories, missing from topics.txt or categories.txt:" \
+            "$LIST" \
+            "Check the topics and the category words before merging (- = never submitted as new). Once merged, a plugin with a release zip is submitted as new by the next run of dalaunch.yml and waits for the review of the repository administrators.")
+          url=$(gh pr list --head new-modules --state open --json url --jq '.[0].url')
+          if [[ -z "$url" ]]; then
+            url=$(gh pr create --head new-modules --base master --title "New Dotclear modules" --body "$body")
+          else
+            gh pr edit "$url" --body "$body" > /dev/null
+          fi
+          echo "Pull request: $url" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Send Telegram Message
+        if: ${{ steps.pr.outputs.changed == '1' }}
+        uses: appleboy/telegram-action@v1.1.2
+        with:
+          to: ${{ secrets.TELEGRAM_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
+          message: |
+            __New Dotclear modules__
+            ${{ steps.find.outputs.list }}
+            - Check and merge: ${{ steps.pr.outputs.url }}
