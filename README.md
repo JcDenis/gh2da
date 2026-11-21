@@ -52,6 +52,10 @@ The repository user needs the permission to submit new modules by API (or to be 
 always reviewed by the repository administrators. Once on the repository, a module keeps its category: updates send no
 category, the category of its current version is kept, even when changed by an administrator.
 
+Only modules of public repositories are sent to the Dotclear repository: daread.yml and daupdate.yml both skip
+a module whose repository is private (or can not be read), with a line in the run summary. A private module still gets
+its checks, tests, release and zip on GitHub from its own workflow.
+
 daupdate.yml also sends, when found:
 
 * the license, recognized from the `LICENSE` file of the zip (GNU GPL, LGPL, AGPL, MIT, Apache) and supported by the repository;

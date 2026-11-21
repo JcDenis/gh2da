@@ -38,8 +38,24 @@ jobs:
       local: ${{ steps.local.outputs.version }}
       newer: ${{ steps.compare.outputs.newer }}
     steps:
+      # Only modules of public repositories go to the Dotclear repository
+      # (private repositories keep their releases and zips on GitHub only)
+      - name: Check repository is public
+        id: visibility
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository_owner }}/${{ inputs.module_id }}
+        run: |
+          private=$(gh api "repos/$REPO" --jq '.private' 2>/dev/null || echo unknown)
+          if [ "$private" = "false" ]; then
+            echo "public=true" >> $GITHUB_OUTPUT
+          else
+            echo "public=false" >> $GITHUB_OUTPUT
+            echo "* Module ${{ inputs.module_id }} skipped: private or unknown repository, nothing sent to the Dotclear repository" >> $GITHUB_STEP_SUMMARY
+          fi
       - name: Get repository latest release
         id: release
+        if: steps.visibility.outputs.public == 'true'
         uses: pozetroninc/github-action-get-latest-release@master
         with:
           repository: "${{ github.repository_owner }}/${{ inputs.module_id }}"
@@ -51,7 +67,7 @@ jobs:
           echo '* ${{ inputs.module_id }} not found' >> $GITHUB_STEP_SUMMARY
           exit 1
       - name: Parse local version
-        if: ${{ success() }}
+        if: ${{ success() && steps.visibility.outputs.public == 'true' }}
         id: local
         run: |
           version="${{ steps.release.outputs.release }}"
@@ -59,7 +75,7 @@ jobs:
 
       - name: Compare version
         id: compare
-        if: ${{ success() }}
+        if: ${{ success() && steps.visibility.outputs.public == 'true' }}
         run: |
           echo '* Repository: ${{ inputs.module_version }}' >> $GITHUB_STEP_SUMMARY
           echo '* GH: ${{ steps.local.outputs.version }}' >> $GITHUB_STEP_SUMMARY
