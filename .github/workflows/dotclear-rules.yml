@@ -1,0 +1,82 @@
+# Update the compatibility rules of the next Dotclear version (dotclear/rules.json)
+#
+# Compares the last stable tag of Dotclear with its master branch (GitHub mirror of the official repository)
+# with scripts/dotclear-rules.php, adds the manual rules of dotclear/rules-manual.json, and commits
+# dotclear/rules.json on master when the rules change. A change of the master commit alone is not committed.
+# See dotclear/RULES.md.
+
+name: Dotclear rules
+
+on:
+  schedule:
+    # every day
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - 'scripts/dotclear-rules.php'
+      - 'scripts/dotclear-behaviors.php'
+      - 'dotclear/rules-manual.json'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dotclear-rules
+  cancel-in-progress: false
+
+jobs:
+  rules:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Get Dotclear sources
+        id: dotclear
+        shell: bash
+        run: |
+          git clone -q --filter=blob:none --no-checkout https://github.com/dotclear/dotclear.git "$RUNNER_TEMP/dc"
+          # last stable tag: x.y or x.y.z, without suffix
+          stable=$(git -C "$RUNNER_TEMP/dc" tag --sort=-v:refname | grep -E '^[0-9]+\.[0-9]+(\.[0-9]+)?$' | head -1)
+          if [[ -z "$stable" ]]; then
+            echo "::error::No stable tag found"
+            exit 1
+          fi
+          git -C "$RUNNER_TEMP/dc" worktree add -q "$RUNNER_TEMP/stable" "$stable"
+          git -C "$RUNNER_TEMP/dc" worktree add -q --detach "$RUNNER_TEMP/next" origin/master
+          echo "stable=$stable" >> "$GITHUB_OUTPUT"
+          echo "commit=$(git -C "$RUNNER_TEMP/next" rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Build rules
+        id: build
+        shell: bash
+        run: |
+          php scripts/dotclear-rules.php "$RUNNER_TEMP/stable" "$RUNNER_TEMP/next" dotclear/rules-manual.json > "$RUNNER_TEMP/rules.json"
+          # compare without the master commit
+          strip='$j = json_decode(file_get_contents($argv[1]), true); unset($j["dotclear"]["commit"]); echo json_encode($j);'
+          if [[ -f dotclear/rules.json ]] && [[ "$(php -r "$strip" dotclear/rules.json)" == "$(php -r "$strip" "$RUNNER_TEMP/rules.json")" ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Rules unchanged"
+          else
+            cp "$RUNNER_TEMP/rules.json" dotclear/rules.json
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            php -r '$j = json_decode(file_get_contents("dotclear/rules.json"), true); $c = array_count_values(array_column($j["rules"], "level")); echo "Rules: ", count($j["rules"]), " (alert: ", $c["alert"] ?? 0, ", notice: ", $c["notice"] ?? 0, ")\n";'
+          fi
+
+      - name: Commit rules
+        if: ${{ steps.build.outputs.changed == 'true' }}
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dotclear/rules.json
+          git commit -q -m "[ci] Update Dotclear rules (${{ steps.dotclear.outputs.stable }} to master ${{ steps.dotclear.outputs.commit }})"
+          git push -q origin HEAD:master
