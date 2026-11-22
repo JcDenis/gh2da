@@ -3,14 +3,16 @@
 /**
  * Build the compatibility rules of the next Dotclear version, for modules (plugins and themes).
  *
- * Usage: php scripts/dotclear-rules.php /path/to/dotclear-stable /path/to/dotclear-next [manual.json] > dotclear/rules.json
+ * Usage: php scripts/dotclear-rules.php /path/to/dotclear-A /path/to/dotclear-B [/path/to/dotclear-C...] [manual.json] > dotclear/rules.json
  *
- * Compares the code of a stable tree (last release) and of a next tree (master) and writes one JSON rule per change
- * a module can meet:
+ * Compares the code of each tree with the next one (ex: 2.39.3 → 2.40.1 → master) and writes one JSON rule per change
+ * a module can meet. Each rule gets as `since` the version (major.minor) of the newer tree of its comparison:
+ * a blog gets the rules newer than its own version. When an element is in several comparisons, the newest one wins.
  *
- * - alert (breaks with the next version): class, interface, trait, enum, method, constant or function removed,
- *   more required parameters for a method or a function, behavior no longer called;
- * - notice (breaks later): element marked `@deprecated` in the next tree, behavior flagged as deprecated.
+ * - alert (breaks with that version): class, interface, trait, enum, method, property, constant or function removed
+ *   or no longer public, more required parameters for a method or a function, behavior no longer called;
+ * - notice (breaks later or in some cases): element marked `@deprecated`, behavior flagged as deprecated,
+ *   parameters changed without new required one.
  *
  * Methods are compared with their traits and parent classes resolved: a method moved to a trait or a parent is not removed.
  * Rules of the manual file (same format) are added; a manual rule with the id of a generated one replaces it,
@@ -22,11 +24,17 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/dotclear-behaviors.php';
 
-$stable = rtrim($argv[1] ?? '', '/');
-$next   = rtrim($argv[2] ?? '', '/');
-$manual = $argv[3] ?? '';
-if (!is_dir($stable . '/src') || !is_dir($next . '/src')) {
-    fwrite(STDERR, "Usage: php dotclear-rules.php /path/to/dotclear-stable /path/to/dotclear-next [manual.json]\n");
+$trees  = [];
+$manual = '';
+foreach (array_slice($argv, 1) as $arg) {
+    if (str_ends_with($arg, '.json')) {
+        $manual = $arg;
+    } else {
+        $trees[] = rtrim($arg, '/');
+    }
+}
+if (count($trees) < 2 || array_filter($trees, fn ($t): bool => !is_dir($t . '/src')) !== []) {
+    fwrite(STDERR, "Usage: php dotclear-rules.php /path/to/dotclear-A /path/to/dotclear-B [/path/to/dotclear-C...] [manual.json]\n");
     exit(1);
 }
 
@@ -54,11 +62,11 @@ function dcrCommit(string $root): string
 }
 
 /**
- * Get a version without its development suffix: 2.41-dev → 2.41.
+ * Get the major.minor of a version: 2.41-dev → 2.41, 2.40.1 → 2.40.
  */
 function dcrVersion(string $version): string
 {
-    return (string) preg_replace('/-.*$/', '', $version);
+    return preg_match('/^(\d+\.\d+)/', $version, $m) ? $m[1] : (string) preg_replace('/-.*$/', '', $version);
 }
 
 /**
@@ -561,200 +569,229 @@ function dcrSignature(array $params): string
     return implode(',', array_map(fn ($p): string => (string) preg_replace('/\$\w+/', '$', $p), $params));
 }
 
-// --- Read both trees
-
-$rel_stable = dcrRelease($stable);
-$rel_next   = dcrRelease($next);
-$v_stable   = (string) ($rel_stable['release_version'] ?? '');
-$v_next     = (string) ($rel_next['release_version'] ?? '');
-$since      = dcrVersion($v_next);
-
-$old = dcrParse($stable);
-$new = dcrParse($next);
-
-// Method names still known somewhere in the next tree (a removed method with a name still used elsewhere
-// can only be found by its class, not by its name alone; a static method is called with its class anyway)
-$known_methods = [];
-foreach ($new['classes'] as $c) {
-    foreach (array_keys($c['methods']) as $k) {
-        $known_methods[$k] = true;
+/**
+ * Compare two trees.
+ *
+ * @param   array{classes: array<string, array<string, mixed>>, functions: array<string, array<string, mixed>>}  $old
+ * @param   array{classes: array<string, array<string, mixed>>, functions: array<string, array<string, mixed>>}  $new
+ *
+ * @return  array<string, array<string, mixed>>     Rules by id
+ */
+function dcrCompare(array $old, array $new, string $stable, string $next, string $since): array
+{
+    // Method names still known somewhere in the next tree (a removed method with a name still used elsewhere
+    // can only be found by its class, not by its name alone; a static method is called with its class anyway)
+    $known_methods = [];
+    foreach ($new['classes'] as $c) {
+        foreach (array_keys($c['methods']) as $k) {
+            $known_methods[$k] = true;
+        }
     }
-}
 
-$rules      = [];
-$signatures = [];
-$add        = function (array $rule) use (&$rules, $since): void {
-    $rule = array_merge(['id' => '', 'type' => '', 'symbol' => '', 'since' => $since, 'level' => 'alert', 'replace' => '', 'note' => ''], $rule);
-    $rules[$rule['id']] = $rule;
-};
+    $rules      = [];
+    $signatures = [];
+    $add        = function (array $rule) use (&$rules, $since): void {
+        $rule = array_merge(['id' => '', 'type' => '', 'symbol' => '', 'since' => $since, 'level' => 'alert', 'replace' => '', 'note' => ''], $rule);
+        $rules[$rule['id']] = $rule;
+    };
 
-// --- Removed or changed in the next tree (alerts)
+    // --- Removed or changed in the next tree (alerts)
 
-foreach ($old['classes'] as $name => $c) {
-    if (!isset($new['classes'][$name])) {
-        // The removed elements were often deprecated before: keep their replacement
-        $removed = function (string $id, string $type, string $symbol, string $what, ?string $deprecated) use ($add): void {
-            [$note, $replace] = dcrReplace($deprecated ?? '');
+    foreach ($old['classes'] as $name => $c) {
+        if (!isset($new['classes'][$name])) {
+            // The removed elements were often deprecated before: keep their replacement
+            $removed = function (string $id, string $type, string $symbol, string $what, ?string $deprecated) use ($add): void {
+                [$note, $replace] = dcrReplace($deprecated ?? '');
+                $add([
+                    'id'      => $id,
+                    'type'    => $type,
+                    'symbol'  => $symbol,
+                    'replace' => $replace,
+                    'note'    => $what . ' removed' . ($deprecated !== null && $note !== '' ? ', was deprecated: ' . $note : ''),
+                ]);
+            };
+            $removed('class:' . $name, 'class', $name, ucfirst($c['kind']), $c['deprecated']);
+            foreach ($c['methods'] as $m) {
+                if ($m['deprecated'] !== null) {
+                    $removed('method:' . $name . '::' . $m['name'], 'method', $name . '::' . $m['name'], 'Method', $m['deprecated']);
+                }
+            }
+            foreach ($c['consts'] as $k => $x) {
+                if ($x['deprecated'] !== null) {
+                    $removed('const:' . $name . '::' . $k, 'const', $name . '::' . $k, 'Constant', $x['deprecated']);
+                }
+            }
+            foreach ($c['props'] as $k => $x) {
+                if ($x['deprecated'] !== null) {
+                    $removed('property:' . $name . '::$' . $k, 'property', $name . '::$' . $k, 'Property', $x['deprecated']);
+                }
+            }
+
+            continue;
+        }
+        $old_m = dcrMethods($old['classes'], $name);
+        $new_m = dcrMethods($new['classes'], $name);
+        foreach ($old_m as $k => $m) {
+            // Report a method once, on the class that declared it
+            if ($m['class'] !== $name) {
+                continue;
+            }
+            if (!isset($new_m[$k])) {
+                $add([
+                    'id'     => 'method:' . $name . '::' . $m['name'],
+                    'type'   => 'method',
+                    'symbol' => $name . '::' . $m['name'],
+                    'unique' => empty($m['static']) && !isset($known_methods[$k]),
+                    'note'   => isset($new['classes'][$name]['private'][$k]) ? 'Method no longer public or protected' : 'Method removed',
+                ]);
+            } elseif ($new_m[$k]['required'] <= $m['required'] && dcrSignature($new_m[$k]['params']) !== dcrSignature($m['params'])) {
+                $signatures[$name . '::' . $m['name']] = [$m['params'], $new_m[$k]['params']];
+            } elseif ($new_m[$k]['required'] > $m['required']) {
+                $add([
+                    'id'     => 'method:' . $name . '::' . $m['name'],
+                    'type'   => 'method',
+                    'symbol' => $name . '::' . $m['name'],
+                    'unique' => empty($m['static']) && count(array_filter($new['classes'], fn ($x): bool => isset($x['methods'][$k]))) === 1,
+                    'note'   => 'More required parameters: (' . implode(', ', $new_m[$k]['params']) . ')',
+                ]);
+            }
+        }
+        $new_p = dcrProps($new['classes'], $name);
+        foreach ($c['props'] as $k => $x) {
+            if (!isset($new_p[$k])) {
+                $add([
+                    'id'     => 'property:' . $name . '::$' . $k,
+                    'type'   => 'property',
+                    'symbol' => $name . '::$' . $k,
+                    'note'   => isset($new['classes'][$name]['private']['$' . $k]) ? 'Property no longer public' : 'Property removed',
+                ]);
+            }
+        }
+        $new_c = dcrConsts($new['classes'], $name);
+        foreach ($c['consts'] as $k => $x) {
+            if (!isset($new_c[$k])) {
+                $add([
+                    'id'     => 'const:' . $name . '::' . $k,
+                    'type'   => 'const',
+                    'symbol' => $name . '::' . $k,
+                    'note'   => isset($new['classes'][$name]['private'][$k]) ? 'Constant no longer public' : 'Constant removed',
+                ]);
+            }
+        }
+    }
+
+    foreach ($old['functions'] as $name => $f) {
+        if (!isset($new['functions'][$name])) {
             $add([
-                'id'      => $id,
-                'type'    => $type,
-                'symbol'  => $symbol,
-                'replace' => $replace,
-                'note'    => $what . ' removed' . ($deprecated !== null && $note !== '' ? ', was deprecated: ' . $note : ''),
+                'id'     => 'function:' . $name,
+                'type'   => 'function',
+                'symbol' => $name,
+                'note'   => 'Function removed (' . $f['file'] . ')',
             ]);
-        };
-        $removed('class:' . $name, 'class', $name, ucfirst($c['kind']), $c['deprecated']);
+        } elseif ($new['functions'][$name]['required'] > $f['required']) {
+            $add([
+                'id'     => 'function:' . $name,
+                'type'   => 'function',
+                'symbol' => $name,
+                'note'   => 'More required parameters: (' . implode(', ', $new['functions'][$name]['params']) . ')',
+            ]);
+        }
+    }
+
+    $old_b = dotclearBehaviors($stable);
+    $new_b = dotclearBehaviors($next);
+    foreach ($old_b as $name => $b) {
+        if (!isset($new_b[$name])) {
+            $add([
+                'id'     => 'behavior:' . $name,
+                'type'   => 'behavior',
+                'symbol' => $name,
+                'note'   => 'Behavior no longer called' . ($b['note'] !== '' ? ', deprecated since ' . $b['note'] : ''),
+            ]);
+        }
+    }
+
+    // --- Deprecated in the next tree (notices)
+
+    $notice = function (string $id, string $type, string $symbol, string $note) use (&$rules, $add): void {
+        if (isset($rules[$id])) {
+            return;
+        }
+        [$note, $replace] = dcrReplace($note);
+        $add([
+            'id'      => $id,
+            'type'    => $type,
+            'symbol'  => $symbol,
+            'level'   => 'notice',
+            'replace' => $replace,
+            'note'    => 'Deprecated' . ($note !== '' ? ': ' . $note : ''),
+        ]);
+    };
+
+    foreach ($new['classes'] as $name => $c) {
+        if ($c['deprecated'] !== null) {
+            $notice('class:' . $name, 'class', $name, $c['deprecated']);
+        }
         foreach ($c['methods'] as $m) {
             if ($m['deprecated'] !== null) {
-                $removed('method:' . $name . '::' . $m['name'], 'method', $name . '::' . $m['name'], 'Method', $m['deprecated']);
+                $notice('method:' . $name . '::' . $m['name'], 'method', $name . '::' . $m['name'], $m['deprecated']);
+                if (isset($rules['method:' . $name . '::' . $m['name']])) {
+                    $rules['method:' . $name . '::' . $m['name']]['unique'] = empty($m['static']) && count(array_filter($new['classes'], fn ($x): bool => isset($x['methods'][strtolower($m['name'])]))) === 1;
+                }
             }
         }
         foreach ($c['consts'] as $k => $x) {
             if ($x['deprecated'] !== null) {
-                $removed('const:' . $name . '::' . $k, 'const', $name . '::' . $k, 'Constant', $x['deprecated']);
+                $notice('const:' . $name . '::' . $k, 'const', $name . '::' . $k, $x['deprecated']);
             }
         }
-        foreach ($c['props'] as $k => $x) {
-            if ($x['deprecated'] !== null) {
-                $removed('property:' . $name . '::$' . $k, 'property', $name . '::$' . $k, 'Property', $x['deprecated']);
-            }
+    }
+    foreach ($new['functions'] as $name => $f) {
+        if ($f['deprecated'] !== null) {
+            $notice('function:' . $name, 'function', $name, $f['deprecated']);
         }
+    }
+    foreach ($new_b as $name => $b) {
+        if ($b['deprecated']) {
+            $notice('behavior:' . $name, 'behavior', $name, $b['note']);
+        }
+    }
 
+    // Parameters changed without more required ones: breaks overrides, and calls in some cases
+    foreach ($signatures as $symbol => [$before, $after]) {
+        $notice('method:' . $symbol, 'method', $symbol, '');
+        $rules['method:' . $symbol]['note'] = 'Parameters changed, check calls and overrides: (' . implode(', ', $before) . ') → (' . implode(', ', $after) . ')';
+    }
+
+    return $rules;
+}
+
+// --- Compare each tree with the next one
+
+$parsed = [];
+$rules  = [];
+$steps  = [];
+foreach ($trees as $i => $tree) {
+    $parsed[$i] = dcrParse($tree);
+    if ($i === 0) {
         continue;
     }
-    $old_m = dcrMethods($old['classes'], $name);
-    $new_m = dcrMethods($new['classes'], $name);
-    foreach ($old_m as $k => $m) {
-        // Report a method once, on the class that declared it
-        if ($m['class'] !== $name) {
-            continue;
-        }
-        if (!isset($new_m[$k])) {
-            $add([
-                'id'     => 'method:' . $name . '::' . $m['name'],
-                'type'   => 'method',
-                'symbol' => $name . '::' . $m['name'],
-                'unique' => empty($m['static']) && !isset($known_methods[$k]),
-                'note'   => isset($new['classes'][$name]['private'][$k]) ? 'Method no longer public or protected' : 'Method removed',
-            ]);
-        } elseif ($new_m[$k]['required'] <= $m['required'] && dcrSignature($new_m[$k]['params']) !== dcrSignature($m['params'])) {
-            $signatures[$name . '::' . $m['name']] = [$m['params'], $new_m[$k]['params']];
-        } elseif ($new_m[$k]['required'] > $m['required']) {
-            $add([
-                'id'     => 'method:' . $name . '::' . $m['name'],
-                'type'   => 'method',
-                'symbol' => $name . '::' . $m['name'],
-                'unique' => empty($m['static']) && count(array_filter($new['classes'], fn ($x): bool => isset($x['methods'][$k]))) === 1,
-                'note'   => 'More required parameters: (' . implode(', ', $new_m[$k]['params']) . ')',
-            ]);
-        }
-    }
-    $new_p = dcrProps($new['classes'], $name);
-    foreach ($c['props'] as $k => $x) {
-        if (!isset($new_p[$k])) {
-            $add([
-                'id'     => 'property:' . $name . '::$' . $k,
-                'type'   => 'property',
-                'symbol' => $name . '::$' . $k,
-                'note'   => isset($new['classes'][$name]['private']['$' . $k]) ? 'Property no longer public' : 'Property removed',
-            ]);
-        }
-    }
-    $new_c = dcrConsts($new['classes'], $name);
-    foreach ($c['consts'] as $k => $x) {
-        if (!isset($new_c[$k])) {
-            $add([
-                'id'     => 'const:' . $name . '::' . $k,
-                'type'   => 'const',
-                'symbol' => $name . '::' . $k,
-                'note'   => isset($new['classes'][$name]['private'][$k]) ? 'Constant no longer public' : 'Constant removed',
-            ]);
-        }
-    }
+    $from    = (string) (dcrRelease($trees[$i - 1])['release_version'] ?? '');
+    $to      = (string) (dcrRelease($tree)['release_version'] ?? '');
+    $steps[] = $from . ' → ' . $to;
+    // The newest comparison wins for an element met in several ones
+    $rules = array_merge($rules, dcrCompare($parsed[$i - 1], $parsed[$i], $trees[$i - 1], $tree, dcrVersion($to)));
+    unset($parsed[$i - 1]);
 }
 
-foreach ($old['functions'] as $name => $f) {
-    if (!isset($new['functions'][$name])) {
-        $add([
-            'id'     => 'function:' . $name,
-            'type'   => 'function',
-            'symbol' => $name,
-            'note'   => 'Function removed (' . $f['file'] . ')',
-        ]);
-    } elseif ($new['functions'][$name]['required'] > $f['required']) {
-        $add([
-            'id'     => 'function:' . $name,
-            'type'   => 'function',
-            'symbol' => $name,
-            'note'   => 'More required parameters: (' . implode(', ', $new['functions'][$name]['params']) . ')',
-        ]);
-    }
-}
-
-$old_b = dotclearBehaviors($stable);
-$new_b = dotclearBehaviors($next);
-foreach ($old_b as $name => $b) {
-    if (!isset($new_b[$name])) {
-        $add([
-            'id'     => 'behavior:' . $name,
-            'type'   => 'behavior',
-            'symbol' => $name,
-            'note'   => 'Behavior no longer called' . ($b['note'] !== '' ? ', deprecated since ' . $b['note'] : ''),
-        ]);
-    }
-}
-
-// --- Deprecated in the next tree (notices)
-
-$notice = function (string $id, string $type, string $symbol, string $note) use (&$rules, $add): void {
-    if (isset($rules[$id])) {
-        return;
-    }
-    [$note, $replace] = dcrReplace($note);
-    $add([
-        'id'      => $id,
-        'type'    => $type,
-        'symbol'  => $symbol,
-        'level'   => 'notice',
-        'replace' => $replace,
-        'note'    => 'Deprecated' . ($note !== '' ? ': ' . $note : ''),
-    ]);
+$stable   = $trees[count($trees) - 2];
+$next     = $trees[count($trees) - 1];
+$rel_next = dcrRelease($next);
+$since    = dcrVersion((string) ($rel_next['release_version'] ?? ''));
+$add      = function (array $rule) use (&$rules, $since): void {
+    $rule = array_merge(['id' => '', 'type' => '', 'symbol' => '', 'since' => $since, 'level' => 'alert', 'replace' => '', 'note' => ''], $rule);
+    $rules[$rule['id']] = $rule;
 };
-
-foreach ($new['classes'] as $name => $c) {
-    if ($c['deprecated'] !== null) {
-        $notice('class:' . $name, 'class', $name, $c['deprecated']);
-    }
-    foreach ($c['methods'] as $m) {
-        if ($m['deprecated'] !== null) {
-            $notice('method:' . $name . '::' . $m['name'], 'method', $name . '::' . $m['name'], $m['deprecated']);
-            if (isset($rules['method:' . $name . '::' . $m['name']])) {
-                $rules['method:' . $name . '::' . $m['name']]['unique'] = empty($m['static']) && count(array_filter($new['classes'], fn ($x): bool => isset($x['methods'][strtolower($m['name'])]))) === 1;
-            }
-        }
-    }
-    foreach ($c['consts'] as $k => $x) {
-        if ($x['deprecated'] !== null) {
-            $notice('const:' . $name . '::' . $k, 'const', $name . '::' . $k, $x['deprecated']);
-        }
-    }
-}
-foreach ($new['functions'] as $name => $f) {
-    if ($f['deprecated'] !== null) {
-        $notice('function:' . $name, 'function', $name, $f['deprecated']);
-    }
-}
-foreach ($new_b as $name => $b) {
-    if ($b['deprecated']) {
-        $notice('behavior:' . $name, 'behavior', $name, $b['note']);
-    }
-}
-
-// Parameters changed without more required ones: breaks overrides, and calls in some cases
-foreach ($signatures as $symbol => [$before, $after]) {
-    $notice('method:' . $symbol, 'method', $symbol, '');
-    $rules['method:' . $symbol]['note'] = 'Parameters changed, check calls and overrides: (' . implode(', ', $before) . ') → (' . implode(', ', $after) . ')';
-}
 
 // --- Manual rules
 
@@ -781,10 +818,12 @@ ksort($rules);
 
 echo json_encode([
     'dotclear' => [
-        'stable'  => $v_stable,
-        'next'    => $v_next,
+        'from'    => (string) (dcrRelease($trees[0])['release_version'] ?? ''),
+        'stable'  => (string) (dcrRelease($stable)['release_version'] ?? ''),
+        'next'    => (string) ($rel_next['release_version'] ?? ''),
         'commit'  => dcrCommit($next),
         'php_min' => (string) ($rel_next['php_min'] ?? ''),
+        'steps'   => $steps,
     ],
     'rules' => array_values($rules),
 ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), "\n";

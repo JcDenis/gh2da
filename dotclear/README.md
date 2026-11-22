@@ -233,7 +233,7 @@ $cur->insert();                              // or $cur->update('WHERE link_id =
 * `scripts/dotclear-api.php <tree>`: public API (classes, public/protected methods with signatures, public constants) of `src/` and `plugins/*/src/`,
   one line per symbol, sorted; `diff` two dumps to see API changes between versions.
 * `scripts/dotclear-behaviors.php <tree> [version]`: Markdown table of the behaviors (regenerates `BEHAVIORS.md`).
-* `scripts/dotclear-rules.php <stable tree> <next tree> [manual.json]`: compatibility rules between two trees, as JSON
+* `scripts/dotclear-rules.php <tree> <tree> [<tree>...] [manual.json]`: compatibility rules between successive trees, as JSON
   (regenerates `rules.json`, see [`RULES.md`](https://github.com/JcDenis/gh2da/blob/master/dotclear/RULES.md)); traits and parent classes resolved.
 * `scripts/dotclear-scan.php [options] <module>...`: checks modules against `rules.json` with `scripts/DotclearRulesScanner.php`
   (standalone class, reusable in other tools).

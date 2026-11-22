@@ -28,6 +28,51 @@
             "level": "notice",
             "replace": "dotclear.toggleWithDetails(element, options)",
             "note": "jQuery plugin deprecated (admin/js/legacy.js)"
+        },
+        {
+            "id": "method:Dotclear\\Helper\\Html\\XmlTag::nodes",
+            "type": "method",
+            "symbol": "Dotclear\\Helper\\Html\\XmlTag::nodes",
+            "since": "2.40",
+            "level": "alert",
+            "unique": true,
+            "replace": "getNodes()",
+            "note": "Magic method renamed (conflict with __set())"
+        },
+        {
+            "id": "method:Dotclear\\Helper\\Html\\XmlTag::node",
+            "type": "method",
+            "symbol": "Dotclear\\Helper\\Html\\XmlTag::node",
+            "since": "2.40",
+            "level": "alert",
+            "replace": "getNode(int $index)",
+            "note": "Magic method renamed (conflict with __set())"
+        },
+        {
+            "id": "method:Dotclear\\Helper\\Html\\XmlTag::name",
+            "type": "method",
+            "symbol": "Dotclear\\Helper\\Html\\XmlTag::name",
+            "since": "2.40",
+            "level": "alert",
+            "replace": "getName()",
+            "note": "Magic method renamed (conflict with __set())"
+        },
+        {
+            "id": "property:Dotclear\\Core\\Frontend\\Utility::$search_count",
+            "type": "property",
+            "symbol": "Dotclear\\Core\\Frontend\\Utility::$search_count",
+            "since": "2.40",
+            "level": "notice",
+            "replace": "",
+            "note": "App::frontend()->search_count is now an int"
+        },
+        {
+            "id": "method:Dotclear\\Plugin\\widgets\\WidgetsElement::setting",
+            "note": "Options (radio, combo) are now the 5th argument, the old trailing 6th argument (opts) is removed: check calls with options"
+        },
+        {
+            "id": "method:Dotclear\\Plugin\\widgets\\WidgetsElement::checkHomeOnly",
+            "note": "2nd and 3rd arguments removed: check calls and overrides"
         }
     ]
 }
