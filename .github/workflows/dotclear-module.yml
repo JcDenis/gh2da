@@ -802,7 +802,10 @@ jobs:
             } elseif (strtolower($id) === 'php') {
               $reqs[] = '* PHP' . ($min !== '' ? ' ' . $min . ' or later' : '');
             } elseif ($id !== '') {
-              $reqs[] = '* [' . $id . '](https://dotclear.org/plugin/detail/' . rawurlencode($id) . ')' . ($min !== '' ? ' ' . $min . ' or later' : '');
+              // optional dependency: id ending with "?"
+              $opt = str_ends_with($id, '?');
+              $id  = rtrim($id, '?');
+              $reqs[] = '* [' . $id . '](https://dotclear.org/plugin/detail/' . rawurlencode($id) . ')' . ($min !== '' ? ' ' . $min . ' or later' : '') . ($opt ? ' (optional)' : '');
             }
           }
 

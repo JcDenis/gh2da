@@ -116,7 +116,7 @@ myModule/
 
 * Namespace `Dotclear\Plugin\<id>` (or `Dotclear\Theme\<id>`), autoloaded from `src/`.
 * `_define.php` properties: `permissions` (`'My'` delegates to `My::checkCustomContext()`, `null` = super admin only, or a permissions string),
-  `type` (`plugin`/`theme`), `priority`, `requires` (`[['core', '2.40'], ['otherModule', '1.0']]`), `settings`
+  `type` (`plugin`/`theme`), `priority`, `requires` (`[['core', '2.40'], ['otherModule', '1.0']]`; id ending with `?` = optional, only the minimum version is checked when the module is enabled), `settings`
   (where the settings are: `'self' => ''`, `'blog' => '#params.id'`, `'pref' => '#user-options.id'`), `standalone_config`,
   `support`, `details`, `repository` (store URL), `date`; themes: `parent`, `tplset`, widget formats.
 * Each `src/` process class uses `Dotclear\Helper\Process\TraitProcess`: `init()` sets the status with

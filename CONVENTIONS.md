@@ -71,7 +71,10 @@ The `CLAUDE.md` of a module takes precedence over this file for that module.
 * carries its own link, in its own code: classes in `src/ClaudetteMcp/` extending `Dotclear\Plugin\ClaudetteMcp\McpTool`
   (or `Tool\PostTool` for entries: `fetch()`, `editable()`, `canWrite()`), added with the behavior `ClaudetteMcpAddTool`
   in its `Frontend.php`, using its own classes (example: [periodical](https://github.com/JcDenis/periodical));
-* never adds ClaudetteMcp to its `requires`: the module works without it;
+* never requires ClaudetteMcp: the module works without it. It can give the minimum version as an optional dependency,
+  with a `?` after the id: `['ClaudetteMcp?', '0.5']` (ClaudetteMcp absent or disabled: no error; older: the module is disabled).
+  Not before the Dotclear version that stops optional dependencies from locking the required module
+  (until then ClaudetteMcp can be neither disabled nor deleted while such a module is enabled): branches `optional-claudettemcp`;
 * does not limit `Frontend::init()` to some URL types, or the behavior is never registered for the connector;
 * checks the Dotclear permissions in each tool (tools run in frontend context, where the core checks nothing):
   a key never gives more than the permissions of its user;
