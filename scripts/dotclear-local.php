@@ -420,6 +420,8 @@ if (!in_array('pages', $skip, true) && $disabled) {
     file_put_contents($config, $conf);
     $db = fn (string $command, string $arg = ''): string => trim((string) shell_exec(PHP_BINARY . ' ' . escapeshellarg($scripts . '/dotclear-db.php') . ' ' . escapeshellarg($inst . '/dotclear.sqlite') . ' ' . $command . ($arg !== '' ? ' ' . escapeshellarg($arg) : '')));
     $db('blogurl', "$url/default/");
+    // Same DotclearWatch identity for every test instance (one installation in Dotclear statistics)
+    $db('watch');
 
     // Module and dependencies (copied, not linked, so file paths in errors are the ones of the instance)
     $copy = function (string $from, string $name) use ($inst, $app, $run): void {

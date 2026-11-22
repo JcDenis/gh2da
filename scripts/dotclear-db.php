@@ -9,6 +9,8 @@
  * - blogurl <url>      : set URL of default blog (path info mode)
  * - posturl            : print URL of last published post of default blog
  * - deprecated         : print deprecated logs (one per line, traces separated by " | ")
+ * - watch              : fixed DotclearWatch client and default blog uids, so reports of test instances
+ *                        count as one installation and one blog in Dotclear statistics
  */
 declare(strict_types=1);
 
@@ -40,6 +42,15 @@ switch ($command) {
 
     case 'posturl':
         echo (string) $db->query("SELECT post_url FROM dc_post WHERE blog_id = 'default' AND post_status = 1 AND post_type = 'post' ORDER BY post_dt DESC LIMIT 1")->fetchColumn();
+
+        break;
+
+    case 'watch':
+        // DotclearWatch identifies an installation by its global setting client_uid (32 chars, random on first report)
+        // and a blog by md5(client_uid . blog_uid), blog_uid being random at installation
+        $db->prepare("DELETE FROM dc_setting WHERE setting_ns = 'DotclearWatch' AND setting_id = 'client_uid' AND blog_id IS NULL")->execute();
+        $db->prepare("INSERT INTO dc_setting (setting_id, blog_id, setting_ns, setting_value, setting_type, setting_label) VALUES ('client_uid', NULL, 'DotclearWatch', ?, 'string', 'Client UID')")->execute([md5('gh2da-test-instance')]);
+        $db->prepare("UPDATE dc_blog SET blog_uid = ? WHERE blog_id = 'default'")->execute([md5('gh2da-test-blog')]);
 
         break;
 
