@@ -210,7 +210,9 @@ jobs:
             }
           }
           $paths = array_filter(['module/src', 'module/_define.php'], $exists);
+          // PHPStan extension of Dotclear for methods added to records by record extensions, if any
           $neon  = "includes:\n  - tools/vendor/phpstan/phpstan-deprecation-rules/rules.neon\n"
+            . ($exists('dotclear/build-tools/phpstan/extension.neon') ? "  - dotclear/build-tools/phpstan/extension.neon\n" : '')
             . "parameters:\n"
             . "  level: max\n"
             . "  checkBenevolentUnionTypes: true\n"
@@ -246,7 +248,10 @@ jobs:
         run: |
           mkdir -p tools
           composer --working-dir=tools --quiet --no-interaction require phpstan/phpstan phpstan/phpstan-deprecation-rules
-          php -d memory_limit=2G tools/vendor/bin/phpstan analyse --no-progress --error-format=github -c phpstan.neon
+          autoload=()
+          # Classes of the PHPStan extension of Dotclear, if any
+          [[ -f dotclear/build-tools/phpstan/autoload.php ]] && autoload=(--autoload-file dotclear/build-tools/phpstan/autoload.php)
+          php -d memory_limit=2G tools/vendor/bin/phpstan analyse --no-progress --error-format=github -c phpstan.neon "${autoload[@]}"
 
   test:
     needs: check

@@ -326,7 +326,10 @@ spl_autoload_register(function (string $class): void {
             }
         }
         $paths = array_values(array_filter([$module . '/src', $module . '/_define.php'], $exists));
-        $neon  = "includes:\n  - $rules/rules.neon\n"
+        // PHPStan extension of Dotclear for methods added to records by record extensions, if any
+        $recext = $exists("$dc/build-tools/phpstan/extension.neon");
+        $neon   = "includes:\n  - $rules/rules.neon\n"
+            . ($recext ? "  - $dc/build-tools/phpstan/extension.neon\n" : '')
             . "parameters:\n"
             . "  level: max\n"
             . "  tmpDir: $cache/phpstan-tmp/$id\n"
@@ -357,7 +360,7 @@ spl_autoload_register(function (string $class): void {
             . '    - message: \'#Call to an undefined method Dotclear\\\\Helper\\\\Html\\\\XmlTag::#\'' . "\n";
         @mkdir($cache . '/phpstan', 0o777, true);
         file_put_contents($neon_file = $cache . '/phpstan/' . $id . '.neon', $neon);
-        $step('phpstan', $run(PHP_BINARY . ' -d memory_limit=2G -d auto_prepend_file=' . escapeshellarg($tools . '/autoload.php') . ' ' . escapeshellarg($phpstan) . ' analyse --no-progress -c ' . escapeshellarg($neon_file)) === 0);
+        $step('phpstan', $run(PHP_BINARY . ' -d memory_limit=2G -d auto_prepend_file=' . escapeshellarg($tools . '/autoload.php') . ' ' . escapeshellarg($phpstan) . ' analyse --no-progress -c ' . escapeshellarg($neon_file) . ($recext ? ' --autoload-file ' . escapeshellarg("$dc/build-tools/phpstan/autoload.php") : '')) === 0);
     }
 }
 
