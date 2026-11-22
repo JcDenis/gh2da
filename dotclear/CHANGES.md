@@ -20,6 +20,8 @@ State of `master` on 2026-11-19 (commit `9a31cac`), 2.40 being released on 2026-
   `->themes`, `->lang`, `->public`, `->wiki`, `->wiki2xhtml`, `->widgets`… Use `App::blog()`, `App::auth()`, `App::con()`,
   `App::frontend()->context()`, `App::frontend()->template()`, `App::media()`, `App::themes()`, `App::lang()`, `App::frontend()`,
   `App::filter()->wiki()`, `Dotclear\Plugin\widgets\Widgets::$widgets`.
+* `Helper\Html\Form` components `Dd`, `Dt`, `Li`, `Link`, `Note`, `Td`, `Th`: constant `DEFAULT_ELEMENT` is now private.
+* `Helper\WebAuthn\Attestation\Format\Tpm::__construct()` takes an `AuthenticatorInterface` as first argument.
 * JS: the core no longer uses the jQuery plugin `$.fn.toggleWithLegend` (deprecated, in `admin/js/legacy.js`): use `dotclear.toggleWithLegend(element, target, options)`.
 
 ### New
@@ -73,7 +75,8 @@ PHP 8.2+ (8.3 to 8.5 compliant).
 * `App::frontend()->search_count` is an `int`.
 * Typos fixed in public names: `Update::ERR_FILES_UNWRITALBE` → `ERR_FILES_UNWRITABLE`, `WebAuthn\Data\Credential::CreateDate()` → `createDate()`,
   simpleMenu `MenuItem` argument `$descripion` → `$description`.
-* `XmlRpc\Request` properties `method` and `args` are no longer public.
+* `XmlRpc\Request` properties `method`, `args` and `xml` are no longer public.
+* `Ctx::$stack` (`App::frontend()->context()`) is no longer public.
 
 ### New API
 
