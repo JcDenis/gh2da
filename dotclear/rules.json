@@ -462,7 +462,7 @@
             "level": "notice",
             "replace": "App::status()->blog()->combo()",
             "note": "Deprecated: since 2.33, use App::status()->blog()->combo() instead",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:Dotclear\\Core\\Backend\\Combos::getCommentStatusesCombo",
@@ -472,7 +472,7 @@
             "level": "notice",
             "replace": "App::status()->comment()->combo()",
             "note": "Deprecated: since 2.33, use App::status()->comment()->combo() instead",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:Dotclear\\Core\\Backend\\Combos::getPostStatusesCombo",
@@ -482,7 +482,7 @@
             "level": "notice",
             "replace": "App::status()->post()->combo()",
             "note": "Deprecated: since 2.33, use App::status()->post()->combo() instead",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:Dotclear\\Core\\Backend\\Favorite::largeIcon",
@@ -552,7 +552,7 @@
             "level": "notice",
             "replace": "App::backend()->menus()->addItem()",
             "note": "Deprecated: since 2.27, use App::backend()->menus()->addItem() instead",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:Dotclear\\Core\\Backend\\ModulesList::doSanitizeModule",
@@ -582,7 +582,7 @@
             "level": "notice",
             "replace": "Modules::getDefine($id)->distributed",
             "note": "Deprecated: since 2.26, use Modules::getDefine($id)->distributed instead",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:Dotclear\\Core\\Backend\\ModulesList::sanitizeModule",
@@ -592,7 +592,7 @@
             "level": "notice",
             "replace": "self::fillSanitizeModule()",
             "note": "Deprecated: since 2.26, use self::fillSanitizeModule() instead",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:Dotclear\\Core\\Backend\\ModulesList::setModules",
@@ -612,7 +612,7 @@
             "level": "notice",
             "replace": "something like uasort($defines, fn ($a, $b) => $a->get($field) <=> $b->get($field));",
             "note": "Deprecated: since 2.26, use something like uasort($defines, fn ($a, $b) => $a->get($field) <=> $b->get($field)); instead",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:Dotclear\\Core\\Backend\\Notices::addNotice",
@@ -672,7 +672,7 @@
             "level": "notice",
             "replace": "My::cssLoad()",
             "note": "Deprecated: since 2.27, use My::cssLoad() instead",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:Dotclear\\Core\\Backend\\Page::error",
@@ -702,7 +702,7 @@
             "level": "notice",
             "replace": "",
             "note": "Deprecated: since 2.16, permanetly removed",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:Dotclear\\Core\\Backend\\Page::jsDatePicker",
@@ -712,7 +712,7 @@
             "level": "notice",
             "replace": "",
             "note": "Deprecated: since 2.21, permanetly removed",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:Dotclear\\Core\\Backend\\Page::jsLoadIE7",
@@ -722,7 +722,7 @@
             "level": "notice",
             "replace": "",
             "note": "Deprecated: since 2.11, permanetly removed",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:Dotclear\\Core\\Backend\\Page::jsModuleLoad",
@@ -732,7 +732,7 @@
             "level": "notice",
             "replace": "My::jsLoad() intead",
             "note": "Deprecated: since 2.27, use My::jsLoad() intead",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:Dotclear\\Core\\Backend\\Page::jsToolBar",
@@ -752,7 +752,7 @@
             "level": "notice",
             "replace": "App::backend()->page()->jsJson() and dotclear.getData()/dotclear.mergeDeep() in javascript",
             "note": "Deprecated: since 2.15, use App::backend()->page()->jsJson() and dotclear.getData()/dotclear.mergeDeep() in javascript instead",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:Dotclear\\Core\\Backend\\Page::jsVars",
@@ -762,7 +762,7 @@
             "level": "notice",
             "replace": "App::backend()->page()->jsJson() and dotclear.getData()/dotclear.mergeDeep() in javascript intead",
             "note": "Deprecated: since 2.15, use App::backend()->page()->jsJson() and dotclear.getData()/dotclear.mergeDeep() in javascript intead",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:Dotclear\\Core\\Backend\\Page::message",
@@ -852,7 +852,7 @@
             "level": "notice",
             "replace": "Ctx::global_filters",
             "note": "Deprecated: since version 2.11 , use Ctx::global_filters instead",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:Dotclear\\Core\\Frontend\\TplBlogTrait::BlogParentThemeURL",
@@ -892,7 +892,7 @@
             "level": "notice",
             "replace": "Schema::fillStructure()",
             "note": "Deprecated: Since 2.33 Use Schema::fillStructure()",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:Dotclear\\Core\\Log::getTable",
@@ -1012,7 +1012,7 @@
             "level": "notice",
             "replace": "",
             "note": "Deprecated: Since 2.26",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:Dotclear\\Helper\\File\\Manager::setExcludePattern",
@@ -1492,7 +1492,7 @@
             "level": "notice",
             "replace": "searchMetadata",
             "note": "Deprecated: Since 2.29, use searchMetadata instead",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:Dotclear\\Schema\\Extension\\Blog::toExtStatic",
@@ -2306,7 +2306,7 @@
             "level": "notice",
             "replace": "Dotclear\\Helper\\Html\\Form\\Checkbox",
             "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\Checkbox instead",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:form::color",
@@ -2336,7 +2336,7 @@
             "level": "notice",
             "replace": "Dotclear\\Helper\\Html\\Form\\Date",
             "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\Date instead",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:form::datetime",
@@ -2356,7 +2356,7 @@
             "level": "notice",
             "replace": "Dotclear\\Helper\\Html\\Form\\Email",
             "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\Email instead",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:form::field",
@@ -2376,7 +2376,7 @@
             "level": "notice",
             "replace": "Dotclear\\Helper\\Html\\Form\\File",
             "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\File instead",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:form::hidden",
@@ -2396,7 +2396,7 @@
             "level": "notice",
             "replace": "Dotclear\\Helper\\Html\\Form\\Number",
             "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\Number instead",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:form::password",
@@ -2406,7 +2406,7 @@
             "level": "notice",
             "replace": "Dotclear\\Helper\\Html\\Form\\Password",
             "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\Password instead",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:form::radio",
@@ -2416,7 +2416,7 @@
             "level": "notice",
             "replace": "Dotclear\\Helper\\Html\\Form\\Radio",
             "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\Radio instead",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:form::textArea",
@@ -2426,7 +2426,7 @@
             "level": "notice",
             "replace": "Dotclear\\Helper\\Html\\Form\\Textarea",
             "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\Textarea instead",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:form::time",
@@ -2436,7 +2436,7 @@
             "level": "notice",
             "replace": "Dotclear\\Helper\\Html\\Form\\Time",
             "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\Time instead",
-            "unique": true
+            "unique": false
         },
         {
             "id": "method:form::url",

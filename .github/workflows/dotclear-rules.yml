@@ -3,7 +3,7 @@
 # Compares the last stable tag of Dotclear with its master branch (GitHub mirror of the official repository)
 # with scripts/dotclear-rules.php, adds the manual rules of dotclear/rules-manual.json, and commits
 # dotclear/rules.json on master when the rules change. A change of the master commit alone is not committed.
-# See dotclear/RULES.md.
+# Also runs the test of the scanner (tests/scanner/test.php). See dotclear/RULES.md.
 
 name: Dotclear rules
 
@@ -18,6 +18,8 @@ on:
       - 'scripts/dotclear-rules.php'
       - 'scripts/dotclear-behaviors.php'
       - 'dotclear/rules-manual.json'
+      - 'scripts/DotclearRulesScanner.php'
+      - 'tests/scanner/**'
 
 permissions:
   contents: write
@@ -38,6 +40,9 @@ jobs:
         with:
           php-version: '8.4'
           coverage: none
+
+      - name: Test scanner
+        run: php tests/scanner/test.php
 
       - name: Get Dotclear sources
         id: dotclear

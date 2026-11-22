@@ -144,7 +144,8 @@ versions (`CHANGES.md`, from 2.39 to the development version) and the list of be
 `dotclear/rules.json` lists, for tools that check modules, what will break or is deprecated in the next Dotclear version
 (`master`) compared with the last stable release (see [`RULES.md`](https://github.com/JcDenis/gh2da/blob/master/dotclear/RULES.md)).
 The workflow `dotclear-rules.yml` regenerates it every day with `scripts/dotclear-rules.php`, plus the manual rules of
-`dotclear/rules-manual.json`, and commits it when the rules change.
+`dotclear/rules-manual.json`, and commits it when the rules change. `scripts/dotclear-scan.php` checks modules against these
+rules (class `scripts/DotclearRulesScanner.php`, standalone).
 
 ## LICENSE
 

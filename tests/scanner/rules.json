@@ -1,0 +1,125 @@
+{
+    "dotclear": {
+        "stable": "2.40.1",
+        "next": "2.41-dev",
+        "commit": "test",
+        "php_min": "8.2"
+    },
+    "rules": [
+        {
+            "id": "behavior:adminPageNotification",
+            "type": "behavior",
+            "symbol": "adminPageNotification",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "adminPageNotificationV2",
+            "note": "Deprecated: 2.39, use adminPageNotificationV2"
+        },
+        {
+            "id": "class:dcCore",
+            "type": "class",
+            "symbol": "dcCore",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::… (App::blog(), App::auth(), App::con(), App::frontend()->context()…)",
+            "note": "Class removed with all its legacy aliases (dcCore::app()->blog, ->auth, ->con, ->ctx, ->tpl…), even with DC_MODERN off",
+            "manual": true
+        },
+        {
+            "id": "class:dcUtils",
+            "type": "class",
+            "symbol": "dcUtils",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::lexical(), App::plugins()->cssLoad(), My::cssLoad(), My::jsLoad()…",
+            "note": "Class removed",
+            "manual": true
+        },
+        {
+            "id": "const:Dotclear\\Helper\\Html\\Form\\Dd::DEFAULT_ELEMENT",
+            "type": "const",
+            "symbol": "Dotclear\\Helper\\Html\\Form\\Dd::DEFAULT_ELEMENT",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "",
+            "note": "Constant no longer public"
+        },
+        {
+            "id": "js:toggleWithLegend",
+            "type": "js",
+            "symbol": "$.fn.toggleWithLegend",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "dotclear.toggleWithLegend(element, target, options)",
+            "note": "jQuery plugin deprecated (admin/js/legacy.js), no longer used by the core",
+            "pattern": "(?<!dotclear)\\.toggleWithLegend\\s*\\(",
+            "manual": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Favorite::largeIcon",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Favorite::largeIcon",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Favorite::dashboardIcon()",
+            "note": "Deprecated: since 2.39 use Favorite::dashboardIcon() instead",
+            "unique": true
+        },
+        {
+            "id": "method:dcCore::app",
+            "type": "method",
+            "symbol": "dcCore::app",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "",
+            "note": "Method removed, was deprecated: since 2.28, nothing to use instead"
+        },
+        {
+            "id": "method:dcUtils::path",
+            "type": "method",
+            "symbol": "dcUtils::path",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "Path::reduce()",
+            "note": "Method removed, was deprecated: since 2.28, use Path::reduce() instead"
+        },
+        {
+            "id": "method:Dotclear\\Test\\Old::veryOldMethod",
+            "type": "method",
+            "symbol": "Dotclear\\Test\\Old::veryOldMethod",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "newMethod()",
+            "note": "Test rule",
+            "unique": true
+        },
+        {
+            "id": "function:Dotclear\\Helper\\oldFunction",
+            "type": "function",
+            "symbol": "Dotclear\\Helper\\oldFunction",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "",
+            "note": "Test rule"
+        },
+        {
+            "id": "class:Dotclear\\Test\\Applied",
+            "type": "class",
+            "symbol": "Dotclear\\Test\\Applied",
+            "since": "2.40",
+            "level": "alert",
+            "replace": "",
+            "note": "Test rule already applied to 2.40.1: skipped"
+        },
+        {
+            "id": "method:Dotclear\\Test\\Old::anotherOldMethod",
+            "type": "method",
+            "symbol": "Dotclear\\Test\\Old::anotherOldMethod",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "",
+            "note": "Test rule",
+            "unique": true
+        }
+    ]
+}
