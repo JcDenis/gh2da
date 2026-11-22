@@ -20,6 +20,11 @@
  */
 declare(strict_types=1);
 
+/**
+ * @phpstan-type Rule array{id: string, type: string, symbol: string, since: string, level: string, replace: string, note: string, pattern: string, unique: bool}
+ * @phpstan-type Finding array{file: string, line: int, id: string, type: string, symbol: string, level: string, rule_level: string, replace: string, note: string, match: string, context: string, guarded: bool}
+ * @phpstan-type Report array{level: string, files: int, alerts: int, notices: int, findings: array<int, Finding>}
+ */
 final class DotclearRulesScanner
 {
     public const ALERT  = 'alert';
@@ -39,22 +44,22 @@ final class DotclearRulesScanner
      */
     private array $header = [];
 
-    /** @var array<string, array<string, mixed>> Class rules by lower case name */
+    /** @var array<string, Rule> Class rules by lower case name */
     private array $classes = [];
 
-    /** @var array<string, array<string, array<string, mixed>>> Member rules by lower case class, then by key (m:name, c:NAME, p:name) */
+    /** @var array<string, array<string, Rule>> Member rules by lower case class, then by key (m:name, c:NAME, p:name) */
     private array $members = [];
 
-    /** @var array<string, array<int, array<string, mixed>>> Method rules found by their name alone (unique), by lower case name */
+    /** @var array<string, array<int, Rule>> Method rules found by their name alone (unique), by lower case name */
     private array $unique = [];
 
-    /** @var array<string, array<string, mixed>> Function rules by lower case name */
+    /** @var array<string, Rule> Function rules by lower case name */
     private array $functions = [];
 
-    /** @var array<string, array<string, mixed>> Behavior rules by name */
+    /** @var array<string, Rule> Behavior rules by name */
     private array $behaviors = [];
 
-    /** @var array<int, array<string, mixed>> JS rules with a pattern */
+    /** @var array<int, Rule> JS rules with a pattern */
     private array $js = [];
 
     /** @var array<string, true> Lower case names (full and short) of all PHP symbols, for guards */
@@ -67,24 +72,56 @@ final class DotclearRulesScanner
     private array $declared = [];
 
     /**
-     * @param   array<string, mixed>    $rules      The decoded rules file
-     * @param   string                  $version    The current Dotclear version: rules already applied to it are skipped
+     * @param   array<mixed>    $rules      The decoded rules file
+     * @param   string          $version    The current Dotclear version: rules already applied to it are skipped
      */
     public function __construct(array $rules, string $version = '')
     {
-        foreach ((array) ($rules['dotclear'] ?? []) as $k => $v) {
-            $this->header[(string) $k] = (string) $v;
+        foreach (is_array($rules['dotclear'] ?? null) ? $rules['dotclear'] : [] as $k => $v) {
+            $this->header[(string) $k] = is_scalar($v) ? (string) $v : '';
         }
-        foreach ((array) ($rules['rules'] ?? []) as $rule) {
-            if (!is_array($rule) || empty($rule['symbol']) || empty($rule['type']) || !empty($rule['disabled'])) {
+        foreach (is_array($rules['rules'] ?? null) ? $rules['rules'] : [] as $raw) {
+            $rule = self::normalize($raw);
+            if ($rule === null) {
                 continue;
             }
-            $since = (string) ($rule['since'] ?? '');
-            if ($version !== '' && $since !== '' && version_compare($since, $version, '<=')) {
+            if ($version !== '' && $rule['since'] !== '' && version_compare($rule['since'], $version, '<=')) {
                 continue;
             }
             $this->addRule($rule);
         }
+    }
+
+    /**
+     * Get a valid rule from a rules file entry, null if it is not one.
+     *
+     * @return  Rule|null
+     */
+    public static function normalize(mixed $raw): ?array
+    {
+        if (!is_array($raw) || !empty($raw['disabled'])) {
+            return null;
+        }
+        $str  = fn (string $key): string => is_scalar($raw[$key] ?? null) ? trim((string) $raw[$key]) : '';
+        $rule = [
+            'id'      => $str('id'),
+            'type'    => $str('type'),
+            'symbol'  => ltrim($str('symbol'), '\\'),
+            'since'   => $str('since'),
+            'level'   => $str('level') === self::NOTICE ? self::NOTICE : self::ALERT,
+            'replace' => $str('replace'),
+            'note'    => $str('note'),
+            'pattern' => $str('pattern'),
+            'unique'  => !empty($raw['unique']),
+        ];
+        if ($rule['type'] === '' || $rule['symbol'] === '') {
+            return null;
+        }
+        if ($rule['id'] === '') {
+            $rule['id'] = $rule['type'] . ':' . $rule['symbol'];
+        }
+
+        return $rule;
     }
 
     /**
@@ -113,7 +150,7 @@ final class DotclearRulesScanner
     /**
      * Check a PHP version against the minimum PHP version of the next Dotclear version.
      *
-     * @return  array<string, mixed>|null   A finding, or null if the version is enough
+     * @return  Finding|null   A finding, or null if the version is enough
      */
     public function checkPhp(string $version = PHP_VERSION): ?array
     {
@@ -143,7 +180,7 @@ final class DotclearRulesScanner
      *
      * @param   array<int, string>  $exclude    Directories to skip (names, at any depth)
      *
-     * @return  array{level: string, files: int, alerts: int, notices: int, findings: array<int, array<string, mixed>>}
+     * @return  Report
      */
     public function scan(string $dir, array $exclude = self::EXCLUDE): array
     {
@@ -157,7 +194,7 @@ final class DotclearRulesScanner
                 )
             );
             foreach ($it as $f) {
-                $path = (string) $f;
+                $path = $f instanceof SplFileInfo ? $f->getPathname() : '';
                 if (str_ends_with($path, '.php') || str_ends_with($path, '.js')) {
                     $files[] = $path;
                 }
@@ -188,9 +225,9 @@ final class DotclearRulesScanner
     /**
      * Build a report from findings.
      *
-     * @param   array<int, array<string, mixed>>    $findings
+     * @param   array<int, Finding>     $findings
      *
-     * @return  array{level: string, files: int, alerts: int, notices: int, findings: array<int, array<string, mixed>>}
+     * @return  Report
      */
     public function report(array $findings, int $files = 0): array
     {
@@ -209,16 +246,17 @@ final class DotclearRulesScanner
     /**
      * Scan the code of a JavaScript file.
      *
-     * @return  array<int, array<string, mixed>>
+     * @return  array<int, Finding>
      */
     public function scanJs(string $code, string $file): array
     {
         $findings = [];
         foreach ($this->js as $rule) {
-            if (@preg_match_all('/' . str_replace('/', '\/', (string) $rule['pattern']) . '/', $code, $m, PREG_OFFSET_CAPTURE) > 0) {
+            if (@preg_match_all('/' . str_replace('/', '\/', $rule['pattern']) . '/', $code, $m, PREG_OFFSET_CAPTURE) > 0) {
                 foreach ($m[0] as [$text, $offset]) {
-                    $line            = substr_count(substr($code, 0, (int) $offset), "\n") + 1;
-                    $findings[$line . $rule['id']] = $this->finding($rule, $file, $line, 'sure', 'js');
+                    $line = substr_count(substr($code, 0, $offset), "\n") + 1;
+
+                    $findings[$line . '|' . $rule['id']] = $this->finding($rule, $file, $line, 'sure', 'js');
                 }
             }
         }
@@ -229,7 +267,7 @@ final class DotclearRulesScanner
     /**
      * Scan the code of a PHP file.
      *
-     * @return  array<int, array<string, mixed>>
+     * @return  array<int, Finding>
      */
     public function scanPhp(string $code, string $file): array
     {
@@ -246,11 +284,10 @@ final class DotclearRulesScanner
         $guarded  = false;
         $findings = [];
 
+        /** @var array<string, Finding> $findings */
         $add = function (array $rule, int $line, string $match, string $context) use (&$findings, $file): void {
+            /** @var Rule $rule */
             $findings[$line . '|' . $rule['id']] ??= $this->finding($rule, $file, $line, $match, $context);
-        };
-        $current = function () use (&$classes): array {
-            return $classes === [] ? ['', ''] : end($classes);
         };
 
         for ($i = 0; $i < $n; $i++) {
@@ -302,7 +339,7 @@ final class DotclearRulesScanner
                         // closure use (...)
                         break;
                     }
-                    [$cname] = $current();
+                    [$cname] = $classes === [] ? ['', ''] : end($classes);
                     if ($classes !== [] && $braces === end($classes)[2]) {
                         // Traits
                         for ($j = $i + 1; $j < $n && $sig[$j][0] !== ';' && $sig[$j][0] !== '{'; $j++) {
@@ -378,7 +415,7 @@ final class DotclearRulesScanner
                             $j++;
                         }
                         if (($sig[$j][0] ?? null) === T_STRING) {
-                            [$cname, $cparent] = $current();
+                            [$cname, $cparent] = end($classes);
                             foreach ($this->chain($cname, $cparent, false) as $class) {
                                 if ($rule = $this->members[$class]['m:' . strtolower($sig[$j][1])] ?? null) {
                                     $add($rule, $sig[$j][2], 'sure', 'override');
@@ -396,7 +433,7 @@ final class DotclearRulesScanner
                     if ($left === null || $right === null) {
                         break;
                     }
-                    [$cname, $cparent] = $current();
+                    [$cname, $cparent] = $classes === [] ? ['', '', 0] : end($classes);
                     $lname = strtolower($left[1]);
                     if ($left[0] === T_STATIC || $lname === 'self' || $lname === 'static') {
                         $chain = $this->chain($cname, $cparent);
@@ -439,7 +476,7 @@ final class DotclearRulesScanner
                     }
                     $found = false;
                     if ($isThis) {
-                        [$cname, $cparent] = $current();
+                        [$cname, $cparent] = $classes === [] ? ['', '', 0] : end($classes);
                         foreach ($this->chain($cname, $cparent, false) as $class) {
                             if ($rule = $this->members[$class][($call ? 'm:' : 'p:') . $lname] ?? null) {
                                 $add($rule, $right[2], 'sure', $call ? 'call' : 'property');
@@ -538,11 +575,11 @@ final class DotclearRulesScanner
     /**
      * Add a rule to the indexes.
      *
-     * @param   array<string, mixed>    $rule
+     * @param   Rule    $rule
      */
     private function addRule(array $rule): void
     {
-        $symbol = ltrim((string) $rule['symbol'], '\\');
+        $symbol = $rule['symbol'];
         switch ($rule['type']) {
             case 'class':
                 $this->classes[strtolower($symbol)] = $rule;
@@ -564,7 +601,7 @@ final class DotclearRulesScanner
                     default    => 'p:' . strtolower(ltrim($member, '$')),
                 };
                 $this->members[strtolower($class)][$key] = $rule;
-                if ($rule['type'] === 'method' && !empty($rule['unique'])) {
+                if ($rule['type'] === 'method' && $rule['unique']) {
                     $this->unique[strtolower($member)][] = $rule;
                 }
                 $this->names[strtolower($class)] = true;
@@ -585,7 +622,7 @@ final class DotclearRulesScanner
                 break;
 
             case 'js':
-                if (!empty($rule['pattern']) && @preg_match('/' . str_replace('/', '\/', (string) $rule['pattern']) . '/', '') !== false) {
+                if ($rule['pattern'] !== '' && @preg_match('/' . str_replace('/', '\/', $rule['pattern']) . '/', '') !== false) {
                     $this->js[] = $rule;
                 }
 
@@ -596,24 +633,22 @@ final class DotclearRulesScanner
     /**
      * Build a finding.
      *
-     * @param   array<string, mixed>    $rule
+     * @param   Rule    $rule
      *
-     * @return  array<string, mixed>
+     * @return  Finding
      */
     private function finding(array $rule, string $file, int $line, string $match, string $context): array
     {
-        $level = ($rule['level'] ?? self::ALERT) === self::NOTICE ? self::NOTICE : self::ALERT;
-
         return [
             'file'       => str_replace('\\', '/', $file),
             'line'       => $line,
-            'id'         => (string) $rule['id'],
-            'type'       => (string) $rule['type'],
-            'symbol'     => ltrim((string) $rule['symbol'], '\\'),
-            'level'      => $level,
-            'rule_level' => $level,
-            'replace'    => (string) ($rule['replace'] ?? ''),
-            'note'       => (string) ($rule['note'] ?? ''),
+            'id'         => $rule['id'],
+            'type'       => $rule['type'],
+            'symbol'     => $rule['symbol'],
+            'level'      => $rule['level'],
+            'rule_level' => $rule['level'],
+            'replace'    => $rule['replace'],
+            'note'       => $rule['note'],
             'match'      => $match,
             'context'    => $context,
             'guarded'    => false,
@@ -736,28 +771,11 @@ final class DotclearRulesScanner
             $kind = 'const';
             $j++;
         }
-        $prefix = '';
-        $name   = '';
-        $alias  = '';
-        $line   = $sig[$i][2];
-        $flush  = function () use (&$name, &$alias, &$prefix, &$kind, &$uses, &$fuses, &$line, $add): void {
-            if ($name === '') {
-                return;
-            }
-            $full = ltrim($prefix . $name, '\\');
-            $key  = strtolower($alias !== '' ? $alias : $this->short($full));
-            if ($kind === 'class') {
-                $uses[$key] = $full;
-                $this->checkClass($full, $line, 'import', $add);
-            } elseif ($kind === 'function') {
-                $fuses[$key] = $full;
-                if ($rule = $this->functions[strtolower($full)] ?? null) {
-                    $add($rule, $line, 'sure', 'import');
-                }
-            }
-            $name  = '';
-            $alias = '';
-        };
+        $prefix  = '';
+        $name    = '';
+        $alias   = '';
+        $line    = $sig[$i][2];
+        $entries = []; // [name, alias, kind, line]
         for (; $j < $n && $sig[$j][0] !== ';'; $j++) {
             [$id, $text, $l] = $sig[$j];
             if ($id === '{') {
@@ -765,7 +783,11 @@ final class DotclearRulesScanner
                 $prefix = rtrim($name, '\\') . '\\';
                 $name   = '';
             } elseif ($id === ',' || $id === '}') {
-                $flush();
+                if ($name !== '') {
+                    $entries[] = [ltrim($prefix . $name, '\\'), $alias, $kind, $line];
+                }
+                $name  = '';
+                $alias = '';
             } elseif ($id === T_AS) {
                 $j++;
                 $alias = $sig[$j][1] ?? '';
@@ -778,7 +800,22 @@ final class DotclearRulesScanner
                 $line = $l;
             }
         }
-        $flush();
+        if ($name !== '') {
+            $entries[] = [ltrim($prefix . $name, '\\'), $alias, $kind, $line];
+        }
+
+        foreach ($entries as [$full, $as, $type, $at]) {
+            $key = strtolower($as !== '' ? $as : $this->short($full));
+            if ($type === 'class') {
+                $uses[$key] = $full;
+                $this->checkClass($full, $at, 'import', $add);
+            } elseif ($type === 'function') {
+                $fuses[$key] = $full;
+                if ($rule = $this->functions[strtolower($full)] ?? null) {
+                    $add($rule, $at, 'sure', 'import');
+                }
+            }
+        }
 
         return $j;
     }
