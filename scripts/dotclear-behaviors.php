@@ -10,6 +10,89 @@
  */
 declare(strict_types=1);
 
+/**
+ * Collect the behaviors called by a Dotclear tree.
+ *
+ * Also used by `dotclear-rules.php`.
+ *
+ * @return  array<string, array{args: array<string, true>, files: array<string, true>, deprecated: bool, note: string}>
+ */
+function dotclearBehaviors(string $root): array
+{
+    // Deprecations announced in the core CHANGELOG, not always flagged next to the call
+    $known = [
+        'adminBlogsSortbyCombo'      => '2.40, use adminBlogsSortbyComboV2',
+        'adminCommentsSortbyCombo'   => '2.40, use adminCommentsSortbyComboV2',
+        'adminPostsSortbyCombo'      => '2.40, use adminPostsSortbyComboV2',
+        'adminUsersSortbyCombo'      => '2.40, use adminUsersSortbyComboV2',
+        'adminSimpleMenuBeforeEdit'  => '2.40, use adminSimpleMenuBeforeEditV2',
+        'adminPageNotificationError' => '2.40, use adminPageNotificationErrorV2',
+        'coreContentFilter'          => '2.40, use coreContentFilterV2',
+        'adminPageNotification'      => '2.39, use adminPageNotificationV2',
+        'adminFiltersListsV2'        => '2.39, use adminFiltersListsV3',
+    ];
+
+    $list = [];
+    foreach (['src', 'plugins', 'themes', 'inc', 'admin'] as $dir) {
+        if (!is_dir($root . '/' . $dir)) {
+            continue;
+        }
+        $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/' . $dir, FilesystemIterator::SKIP_DOTS));
+        foreach ($it as $file) {
+            $path = (string) $file;
+            if (!str_ends_with($path, '.php')) {
+                continue;
+            }
+            $rel = substr($path, strlen($root) + 1);
+            // Legacy compatibility plugins only relay old behaviors
+            if (preg_match('#^plugins/dcProxyV[12]/#', $rel)) {
+                continue;
+            }
+            $lines = file($path, FILE_IGNORE_NEW_LINES) ?: [];
+            foreach ($lines as $i => $line) {
+                if (!str_contains($line, 'callBehavior(')) {
+                    continue;
+                }
+                // Behavior name: first string literal after callBehavior( (same or next lines)
+                $chunk = implode(' ', array_slice($lines, $i, 4));
+                if (!preg_match("/callBehavior\(\s*'([A-Za-z0-9_]+)'/", $chunk, $m)) {
+                    continue;
+                }
+                $name = $m[1];
+                // Look back a few lines for the core documentation comment and a deprecation note
+                $args       = '';
+                $deprecated = false;
+                // (walk back to the previous empty line or call, at most 12 lines)
+                for ($j = $i - 1; $j >= max(0, $i - 12); $j--) {
+                    if (trim($lines[$j]) === '' || str_contains($lines[$j], 'callBehavior(')) {
+                        break;
+                    }
+                    if (preg_match('/--BEHAVIOR--\s*' . preg_quote($name, '/') . '\b\s*(?:-{1,2}|:)?\s*(.*)$/', $lines[$j], $d)) {
+                        $args = trim($d[1]);
+                    }
+                    if (stripos($lines[$j], 'deprecated') !== false) {
+                        $deprecated = true;
+                    }
+                }
+                $list[$name] ??= ['args' => [], 'files' => [], 'deprecated' => false, 'note' => $known[$name] ?? ''];
+                if ($args !== '') {
+                    $list[$name]['args'][$args] = true;
+                }
+                $list[$name]['files'][$rel] = true;
+                $list[$name]['deprecated'] = $list[$name]['deprecated'] || $deprecated || isset($known[$name]);
+            }
+        }
+    }
+    ksort($list, SORT_NATURAL | SORT_FLAG_CASE);
+
+    return $list;
+}
+
+// Included by another script: only define the function
+if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') !== __FILE__) {
+    return;
+}
+
 $root    = rtrim($argv[1] ?? '', '/');
 $version = $argv[2] ?? '';
 if ($root === '' || !is_dir($root . '/src')) {
@@ -17,71 +100,8 @@ if ($root === '' || !is_dir($root . '/src')) {
     exit(1);
 }
 
-// Deprecations announced in the core CHANGELOG, not always flagged next to the call
-$known = [
-    'adminBlogsSortbyCombo'      => '2.40, use adminBlogsSortbyComboV2',
-    'adminCommentsSortbyCombo'   => '2.40, use adminCommentsSortbyComboV2',
-    'adminPostsSortbyCombo'      => '2.40, use adminPostsSortbyComboV2',
-    'adminUsersSortbyCombo'      => '2.40, use adminUsersSortbyComboV2',
-    'adminSimpleMenuBeforeEdit'  => '2.40, use adminSimpleMenuBeforeEditV2',
-    'adminPageNotificationError' => '2.40, use adminPageNotificationErrorV2',
-    'coreContentFilter'          => '2.40, use coreContentFilterV2',
-    'adminPageNotification'      => '2.39, use adminPageNotificationV2',
-    'adminFiltersListsV2'        => '2.39, use adminFiltersListsV3',
-];
+$list = dotclearBehaviors($root);
 
-$list = [];
-foreach (['src', 'plugins', 'themes', 'inc', 'admin'] as $dir) {
-    if (!is_dir($root . '/' . $dir)) {
-        continue;
-    }
-    $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/' . $dir, FilesystemIterator::SKIP_DOTS));
-    foreach ($it as $file) {
-        $path = (string) $file;
-        if (!str_ends_with($path, '.php')) {
-            continue;
-        }
-        $rel = substr($path, strlen($root) + 1);
-        // Legacy compatibility plugins only relay old behaviors
-        if (preg_match('#^plugins/dcProxyV[12]/#', $rel)) {
-            continue;
-        }
-        $lines = file($path, FILE_IGNORE_NEW_LINES) ?: [];
-        foreach ($lines as $i => $line) {
-            if (!str_contains($line, 'callBehavior(')) {
-                continue;
-            }
-            // Behavior name: first string literal after callBehavior( (same or next lines)
-            $chunk = implode(' ', array_slice($lines, $i, 4));
-            if (!preg_match("/callBehavior\(\s*'([A-Za-z0-9_]+)'/", $chunk, $m)) {
-                continue;
-            }
-            $name = $m[1];
-            // Look back a few lines for the core documentation comment and a deprecation note
-            $args       = '';
-            $deprecated = false;
-            // (walk back to the previous empty line or call, at most 12 lines)
-            for ($j = $i - 1; $j >= max(0, $i - 12); $j--) {
-                if (trim($lines[$j]) === '' || str_contains($lines[$j], 'callBehavior(')) {
-                    break;
-                }
-                if (preg_match('/--BEHAVIOR--\s*' . preg_quote($name, '/') . '\b\s*(?:-{1,2}|:)?\s*(.*)$/', $lines[$j], $d)) {
-                    $args = trim($d[1]);
-                }
-                if (stripos($lines[$j], 'deprecated') !== false) {
-                    $deprecated = true;
-                }
-            }
-            $list[$name] ??= ['args' => [], 'files' => [], 'deprecated' => false];
-            if ($args !== '') {
-                $list[$name]['args'][$args] = true;
-            }
-            $list[$name]['files'][$rel] = true;
-            $list[$name]['deprecated'] = $list[$name]['deprecated'] || $deprecated || isset($known[$name]);
-        }
-    }
-}
-ksort($list, SORT_NATURAL | SORT_FLAG_CASE);
 
 $esc = fn (string $s): string => str_replace('|', '\|', $s);
 
@@ -98,5 +118,5 @@ foreach ($list as $name => $b) {
     if (count($files) > 3) {
         $files = array_merge(array_slice($files, 0, 3), ['+' . (count($files) - 3)]);
     }
-    echo '| `' . $name . '` | ' . $esc(implode('<br>', array_keys($b['args']))) . ' | ' . $esc(implode('<br>', $files)) . ' | ' . ($b['deprecated'] ? ($known[$name] ?? 'yes') : '') . " |\n";
+    echo '| `' . $name . '` | ' . $esc(implode('<br>', array_keys($b['args']))) . ' | ' . $esc(implode('<br>', $files)) . ' | ' . ($b['deprecated'] ? ($b['note'] !== '' ? $b['note'] : 'yes') : '') . " |\n";
 }
