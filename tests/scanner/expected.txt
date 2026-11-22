@@ -1,0 +1,17 @@
+js/admin.js:2 notice sure js js:toggleWithLegend
+src/Backend.php:6 alert sure import class:dcCore
+src/Backend.php:15 alert sure static class:dcCore
+src/Backend.php:16 alert sure static const:Dotclear\Helper\Html\Form\Dd::DEFAULT_ELEMENT
+src/Backend.php:17 alert sure static method:dcUtils::path
+src/Backend.php:19 notice sure behavior behavior:adminPageNotification
+src/Backend.php:22 notice sure call method:Dotclear\Core\Backend\Favorite::largeIcon
+src/Backend.php:29 notice sure override method:Dotclear\Core\Backend\Favorite::largeIcon
+src/Backend.php:31 notice sure static method:Dotclear\Core\Backend\Favorite::largeIcon
+src/Guarded.php:9 notice sure static class:dcCore guarded
+src/Other.php:4 alert sure import function:Dotclear\Helper\oldFunction
+src/Other.php:11 alert probable call method:Dotclear\Test\Old::veryOldMethod
+src/Other.php:12 alert probable call method:Dotclear\Test\Old::veryOldMethod
+src/Other.php:13 alert sure call function:Dotclear\Helper\oldFunction
+src/Other.php:14 alert sure call function:Dotclear\Helper\oldFunction
+php 8.1.0: alert
+php 8.4.0: ok

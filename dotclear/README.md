@@ -235,6 +235,8 @@ $cur->insert();                              // or $cur->update('WHERE link_id =
 * `scripts/dotclear-behaviors.php <tree> [version]`: Markdown table of the behaviors (regenerates `BEHAVIORS.md`).
 * `scripts/dotclear-rules.php <stable tree> <next tree> [manual.json]`: compatibility rules between two trees, as JSON
   (regenerates `rules.json`, see [`RULES.md`](https://github.com/JcDenis/gh2da/blob/master/dotclear/RULES.md)); traits and parent classes resolved.
+* `scripts/dotclear-scan.php [options] <module>...`: checks modules against `rules.json` with `scripts/DotclearRulesScanner.php`
+  (standalone class, reusable in other tools).
 
 ```bash
 git -C dotclear archive 2.40.1 src plugins inc themes admin | (mkdir -p /tmp/dc-2.40.1 && tar -x -C /tmp/dc-2.40.1)

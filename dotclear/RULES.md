@@ -47,7 +47,7 @@ Rule fields:
 | `level` | `alert`: breaks with the next version. `notice`: deprecated or changed, breaks later or in some cases. |
 | `replace` | What to use instead, when known (short text, may be empty). |
 | `note` | Short explanation, in English. |
-| `unique` | (methods) `true` when no class of the next version has a method with this name: a call found by its name alone (`->name(`) is then probably this one. Otherwise, only calls with a known class count (`Class::name(`, `parent::name(` in a subclass). |
+| `unique` | (methods) `true` when no class of the next version has a method with this name and the method is not static: a call found by its name alone (`->name(`) is then probably this one. Otherwise, only calls with a known class count (`Class::name(`, `parent::name(` in a subclass). |
 | `pattern` | (manual `js` rules) PCRE pattern, without delimiters, to search in JavaScript files. |
 | `manual` | `true` when the rule comes from, or was changed by, `rules-manual.json`. |
 
@@ -95,7 +95,41 @@ These go in `rules-manual.json`, by hand.
 
 Corrections of a single server (DotclearWatchServer) are made there, not here; a correction useful to everyone comes back here.
 
-## Reading the rules (for a scanner)
+## Scanner
+
+[`scripts/DotclearRulesScanner.php`](https://github.com/JcDenis/gh2da/blob/master/scripts/DotclearRulesScanner.php) checks a module
+against the rules. One class, no dependency on Dotclear (PHP 8.2+), meant to be reused as is (DotclearWatch, CI of modules):
+
+```php
+$scanner = DotclearRulesScanner::fromFile('rules.json', '2.40.1'); // current Dotclear version: rules already applied are skipped
+$report  = $scanner->scan('/path/to/module');                      // level (alert, notice, ok), files, alerts, notices, findings
+$php     = $scanner->checkPhp(PHP_VERSION);                         // finding or null
+```
+
+Each finding gives the file, line, rule (`id`, `type`, `symbol`, `replace`, `note`), its `level`, `match` (`sure` or `probable`),
+`context` (import, extends, implements, use, new, static, call, override, property, string, behavior, js) and `guarded`.
+
+From the command line, for one or more modules:
+
+```bash
+php scripts/dotclear-scan.php [--rules=<file or URL>] [--version=2.40.1] [--php=8.1.0] [--json] [--strict] <module directory>...
+```
+
+Without `--rules`, it reads `dotclear/rules.json` of the clone, else the online file. `--strict` exits with code 1 on an alert.
+
+Test: `php tests/scanner/test.php` (fake module of `tests/scanner/module`, fixed rules of `tests/scanner/rules.json`,
+expected findings in `tests/scanner/expected.txt`; `--update` rewrites them, check the diff).
+
+How it reads the code:
+
+* `vendor/`, `node_modules/`, `docs/`, `tests/` and hidden directories are skipped.
+* A class and one of its members on the same line give one finding: the member when it has a replacement, else the class.
+* A call by method name alone is ignored on `$this` and when the module declares a method with that name.
+* Class names in strings count only when qualified (`'Dotclear\Core\…'`): a short one is often a plain word (`'form'`).
+* Limits: a method called on a variable whose class is unknown is only found by its name (`unique`);
+  the parents of core classes are not known (a rule on a core grandparent of a module class is missed).
+
+## Reading the rules (for another scanner)
 
 * Search PHP files with the tokenizer, resolve `use` imports, compare names case insensitively (as PHP does).
 * `class`: any use of the name (`new`, `extends`, `implements`, static call, `instanceof`, type, `::class`, string in a `class_exists()`).
