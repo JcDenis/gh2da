@@ -573,7 +573,7 @@ $old = dcrParse($stable);
 $new = dcrParse($next);
 
 // Method names still known somewhere in the next tree (a removed method with a name still used elsewhere
-// can only be found by its class, not by its name alone)
+// can only be found by its class, not by its name alone; a static method is called with its class anyway)
 $known_methods = [];
 foreach ($new['classes'] as $c) {
     foreach (array_keys($c['methods']) as $k) {
@@ -634,7 +634,7 @@ foreach ($old['classes'] as $name => $c) {
                 'id'     => 'method:' . $name . '::' . $m['name'],
                 'type'   => 'method',
                 'symbol' => $name . '::' . $m['name'],
-                'unique' => !isset($known_methods[$k]),
+                'unique' => empty($m['static']) && !isset($known_methods[$k]),
                 'note'   => isset($new['classes'][$name]['private'][$k]) ? 'Method no longer public or protected' : 'Method removed',
             ]);
         } elseif ($new_m[$k]['required'] <= $m['required'] && dcrSignature($new_m[$k]['params']) !== dcrSignature($m['params'])) {
@@ -644,7 +644,7 @@ foreach ($old['classes'] as $name => $c) {
                 'id'     => 'method:' . $name . '::' . $m['name'],
                 'type'   => 'method',
                 'symbol' => $name . '::' . $m['name'],
-                'unique' => count(array_filter($new['classes'], fn ($x): bool => isset($x['methods'][$k]))) === 1,
+                'unique' => empty($m['static']) && count(array_filter($new['classes'], fn ($x): bool => isset($x['methods'][$k]))) === 1,
                 'note'   => 'More required parameters: (' . implode(', ', $new_m[$k]['params']) . ')',
             ]);
         }
@@ -729,7 +729,7 @@ foreach ($new['classes'] as $name => $c) {
         if ($m['deprecated'] !== null) {
             $notice('method:' . $name . '::' . $m['name'], 'method', $name . '::' . $m['name'], $m['deprecated']);
             if (isset($rules['method:' . $name . '::' . $m['name']])) {
-                $rules['method:' . $name . '::' . $m['name']]['unique'] = count(array_filter($new['classes'], fn ($x): bool => isset($x['methods'][strtolower($m['name'])]))) === 1;
+                $rules['method:' . $name . '::' . $m['name']]['unique'] = empty($m['static']) && count(array_filter($new['classes'], fn ($x): bool => isset($x['methods'][strtolower($m['name'])]))) === 1;
             }
         }
     }
