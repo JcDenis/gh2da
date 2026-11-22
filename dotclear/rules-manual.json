@@ -1,0 +1,33 @@
+{
+    "about": "Manual compatibility rules, merged by scripts/dotclear-rules.php into rules.json (see RULES.md). A rule with the id of a generated one replaces its fields; \"disabled\": true removes it.",
+    "rules": [
+        {
+            "id": "class:dcCore",
+            "replace": "App::… (App::blog(), App::auth(), App::con(), App::frontend()->context()…)",
+            "note": "Class removed with all its legacy aliases (dcCore::app()->blog, ->auth, ->con, ->ctx, ->tpl…), even with DC_MODERN off"
+        },
+        {
+            "id": "class:dcUtils",
+            "replace": "App::lexical(), App::plugins()->cssLoad(), My::cssLoad(), My::jsLoad()…",
+            "note": "Class removed"
+        },
+        {
+            "id": "js:toggleWithLegend",
+            "type": "js",
+            "symbol": "$.fn.toggleWithLegend",
+            "pattern": "(?<!dotclear)\\.toggleWithLegend\\s*\\(",
+            "level": "notice",
+            "replace": "dotclear.toggleWithLegend(element, target, options)",
+            "note": "jQuery plugin deprecated (admin/js/legacy.js), no longer used by the core"
+        },
+        {
+            "id": "js:toggleWithDetails",
+            "type": "js",
+            "symbol": "$.fn.toggleWithDetails",
+            "pattern": "(?<!dotclear)\\.toggleWithDetails\\s*\\(",
+            "level": "notice",
+            "replace": "dotclear.toggleWithDetails(element, options)",
+            "note": "jQuery plugin deprecated (admin/js/legacy.js)"
+        }
+    ]
+}

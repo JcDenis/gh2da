@@ -9,7 +9,9 @@ with how the core works and what changed between versions. Read online, like CON
 * this file: architecture, module anatomy, main APIs, pitfalls;
 * [`CHANGES.md`](https://github.com/JcDenis/gh2da/blob/master/dotclear/CHANGES.md): API changes 2.39 → 2.40 → 2.41-dev, deprecations, removals;
 * [`BEHAVIORS.md`](https://github.com/JcDenis/gh2da/blob/master/dotclear/BEHAVIORS.md): all behaviors called by the core and distributed plugins, with arguments
-  (generated from 2.40.1; master has the same list).
+  (generated from 2.40.1; master has the same list);
+* [`RULES.md`](https://github.com/JcDenis/gh2da/blob/master/dotclear/RULES.md) and `rules.json`: compatibility rules of the next version
+  for tools that check modules (generated every day from the last stable tag and `master`, plus `rules-manual.json`).
 
 The sources always win over this file: when a signature matters, check it in the core at the version required by the module.
 
@@ -231,6 +233,8 @@ $cur->insert();                              // or $cur->update('WHERE link_id =
 * `scripts/dotclear-api.php <tree>`: public API (classes, public/protected methods with signatures, public constants) of `src/` and `plugins/*/src/`,
   one line per symbol, sorted; `diff` two dumps to see API changes between versions.
 * `scripts/dotclear-behaviors.php <tree> [version]`: Markdown table of the behaviors (regenerates `BEHAVIORS.md`).
+* `scripts/dotclear-rules.php <stable tree> <next tree> [manual.json]`: compatibility rules between two trees, as JSON
+  (regenerates `rules.json`, see [`RULES.md`](https://github.com/JcDenis/gh2da/blob/master/dotclear/RULES.md)); traits and parent classes resolved.
 
 ```bash
 git -C dotclear archive 2.40.1 src plugins inc themes admin | (mkdir -p /tmp/dc-2.40.1 && tar -x -C /tmp/dc-2.40.1)

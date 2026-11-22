@@ -1,0 +1,2722 @@
+{
+    "dotclear": {
+        "stable": "2.40.1",
+        "next": "2.41-dev",
+        "commit": "21096d880",
+        "php_min": "8.2"
+    },
+    "rules": [
+        {
+            "id": "behavior:adminBlogsSortbyCombo",
+            "type": "behavior",
+            "symbol": "adminBlogsSortbyCombo",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "adminBlogsSortbyComboV2",
+            "note": "Deprecated: 2.40, use adminBlogsSortbyComboV2"
+        },
+        {
+            "id": "behavior:adminCommentsSortbyCombo",
+            "type": "behavior",
+            "symbol": "adminCommentsSortbyCombo",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "adminCommentsSortbyComboV2",
+            "note": "Deprecated: 2.40, use adminCommentsSortbyComboV2"
+        },
+        {
+            "id": "behavior:adminFiltersListsV2",
+            "type": "behavior",
+            "symbol": "adminFiltersListsV2",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "adminFiltersListsV3",
+            "note": "Deprecated: 2.39, use adminFiltersListsV3"
+        },
+        {
+            "id": "behavior:adminPageNotification",
+            "type": "behavior",
+            "symbol": "adminPageNotification",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "adminPageNotificationV2",
+            "note": "Deprecated: 2.39, use adminPageNotificationV2"
+        },
+        {
+            "id": "behavior:adminPageNotificationError",
+            "type": "behavior",
+            "symbol": "adminPageNotificationError",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "adminPageNotificationErrorV2",
+            "note": "Deprecated: 2.40, use adminPageNotificationErrorV2"
+        },
+        {
+            "id": "behavior:adminPostsSortbyCombo",
+            "type": "behavior",
+            "symbol": "adminPostsSortbyCombo",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "adminPostsSortbyComboV2",
+            "note": "Deprecated: 2.40, use adminPostsSortbyComboV2"
+        },
+        {
+            "id": "behavior:adminSimpleMenuBeforeEdit",
+            "type": "behavior",
+            "symbol": "adminSimpleMenuBeforeEdit",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "adminSimpleMenuBeforeEditV2",
+            "note": "Deprecated: 2.40, use adminSimpleMenuBeforeEditV2"
+        },
+        {
+            "id": "behavior:adminUsersSortbyCombo",
+            "type": "behavior",
+            "symbol": "adminUsersSortbyCombo",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "adminUsersSortbyComboV2",
+            "note": "Deprecated: 2.40, use adminUsersSortbyComboV2"
+        },
+        {
+            "id": "behavior:coreAfterPostContentFormat",
+            "type": "behavior",
+            "symbol": "coreAfterPostContentFormat",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "",
+            "note": "Deprecated"
+        },
+        {
+            "id": "behavior:coreBlogConstruct",
+            "type": "behavior",
+            "symbol": "coreBlogConstruct",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "",
+            "note": "Deprecated"
+        },
+        {
+            "id": "behavior:coreContentFilter",
+            "type": "behavior",
+            "symbol": "coreContentFilter",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "coreContentFilterV2",
+            "note": "Deprecated: 2.40, use coreContentFilterV2"
+        },
+        {
+            "id": "behavior:coreMediaConstruct",
+            "type": "behavior",
+            "symbol": "coreMediaConstruct",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "",
+            "note": "Deprecated"
+        },
+        {
+            "id": "class:Dotclear\\Core\\Backend\\Update",
+            "type": "class",
+            "symbol": "Dotclear\\Core\\Backend\\Update",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Dotclear\\Core\\Upgrade\\Update",
+            "note": "Deprecated: since 2.29, use Dotclear\\Core\\Upgrade\\Update instead."
+        },
+        {
+            "id": "class:dcCore",
+            "type": "class",
+            "symbol": "dcCore",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::… (App::blog(), App::auth(), App::con(), App::frontend()->context()…)",
+            "note": "Class removed with all its legacy aliases (dcCore::app()->blog, ->auth, ->con, ->ctx, ->tpl…), even with DC_MODERN off",
+            "manual": true
+        },
+        {
+            "id": "class:dcUtils",
+            "type": "class",
+            "symbol": "dcUtils",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::lexical(), App::plugins()->cssLoad(), My::cssLoad(), My::jsLoad()…",
+            "note": "Class removed",
+            "manual": true
+        },
+        {
+            "id": "class:form",
+            "type": "class",
+            "symbol": "form",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Dotclear\\Helper\\Html\\Form\\*",
+            "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\* instead"
+        },
+        {
+            "id": "class:formSelectOption",
+            "type": "class",
+            "symbol": "formSelectOption",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Dotclear\\Helper\\Html\\Form\\Option",
+            "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\Option instead"
+        },
+        {
+            "id": "const:Dotclear\\Core\\Backend\\Utility::MENU_BLOG",
+            "type": "const",
+            "symbol": "Dotclear\\Core\\Backend\\Utility::MENU_BLOG",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::backend()->menus()::MENU_BLOG",
+            "note": "Deprecated: since 2.27, use App::backend()->menus()::MENU_BLOG"
+        },
+        {
+            "id": "const:Dotclear\\Core\\Backend\\Utility::MENU_FAVORITES",
+            "type": "const",
+            "symbol": "Dotclear\\Core\\Backend\\Utility::MENU_FAVORITES",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::backend()->menus()::MENU_FAVORITES",
+            "note": "Deprecated: since 2.27, use App::backend()->menus()::MENU_FAVORITES"
+        },
+        {
+            "id": "const:Dotclear\\Core\\Backend\\Utility::MENU_PLUGINS",
+            "type": "const",
+            "symbol": "Dotclear\\Core\\Backend\\Utility::MENU_PLUGINS",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::backend()->menus()::MENU_PLUGINS",
+            "note": "Deprecated: since 2.27, use App::backend()->menus()::MENU_PLUGINS"
+        },
+        {
+            "id": "const:Dotclear\\Core\\Backend\\Utility::MENU_SYSTEM",
+            "type": "const",
+            "symbol": "Dotclear\\Core\\Backend\\Utility::MENU_SYSTEM",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::backend()->menus()::MENU_SYSTEM",
+            "note": "Deprecated: since 2.27, use App::backend()->menus()::MENU_SYSTEM"
+        },
+        {
+            "id": "const:Dotclear\\Helper\\Html\\Form\\Dd::DEFAULT_ELEMENT",
+            "type": "const",
+            "symbol": "Dotclear\\Helper\\Html\\Form\\Dd::DEFAULT_ELEMENT",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "",
+            "note": "Constant no longer public"
+        },
+        {
+            "id": "const:Dotclear\\Helper\\Html\\Form\\Dt::DEFAULT_ELEMENT",
+            "type": "const",
+            "symbol": "Dotclear\\Helper\\Html\\Form\\Dt::DEFAULT_ELEMENT",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "",
+            "note": "Constant no longer public"
+        },
+        {
+            "id": "const:Dotclear\\Helper\\Html\\Form\\Li::DEFAULT_ELEMENT",
+            "type": "const",
+            "symbol": "Dotclear\\Helper\\Html\\Form\\Li::DEFAULT_ELEMENT",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "",
+            "note": "Constant no longer public"
+        },
+        {
+            "id": "const:Dotclear\\Helper\\Html\\Form\\Link::DEFAULT_ELEMENT",
+            "type": "const",
+            "symbol": "Dotclear\\Helper\\Html\\Form\\Link::DEFAULT_ELEMENT",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "",
+            "note": "Constant no longer public"
+        },
+        {
+            "id": "const:Dotclear\\Helper\\Html\\Form\\Note::DEFAULT_ELEMENT",
+            "type": "const",
+            "symbol": "Dotclear\\Helper\\Html\\Form\\Note::DEFAULT_ELEMENT",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "",
+            "note": "Constant no longer public"
+        },
+        {
+            "id": "const:Dotclear\\Helper\\Html\\Form\\Td::DEFAULT_ELEMENT",
+            "type": "const",
+            "symbol": "Dotclear\\Helper\\Html\\Form\\Td::DEFAULT_ELEMENT",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "",
+            "note": "Constant no longer public"
+        },
+        {
+            "id": "const:Dotclear\\Helper\\Html\\Form\\Th::DEFAULT_ELEMENT",
+            "type": "const",
+            "symbol": "Dotclear\\Helper\\Html\\Form\\Th::DEFAULT_ELEMENT",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "",
+            "note": "Constant no longer public"
+        },
+        {
+            "id": "const:Dotclear\\Interface\\Core\\BlogInterface::BLOG_OFFLINE",
+            "type": "const",
+            "symbol": "Dotclear\\Interface\\Core\\BlogInterface::BLOG_OFFLINE",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->blog()::OFFLINE",
+            "note": "Deprecated: since 2.33, use App::status()->blog()::OFFLINE instead"
+        },
+        {
+            "id": "const:Dotclear\\Interface\\Core\\BlogInterface::BLOG_ONLINE",
+            "type": "const",
+            "symbol": "Dotclear\\Interface\\Core\\BlogInterface::BLOG_ONLINE",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->blog()::ONLINE",
+            "note": "Deprecated: since 2.33, use App::status()->blog()::ONLINE instead"
+        },
+        {
+            "id": "const:Dotclear\\Interface\\Core\\BlogInterface::BLOG_REMOVED",
+            "type": "const",
+            "symbol": "Dotclear\\Interface\\Core\\BlogInterface::BLOG_REMOVED",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->blog()::REMOVED",
+            "note": "Deprecated: since 2.33, use App::status()->blog()::REMOVED instead"
+        },
+        {
+            "id": "const:Dotclear\\Interface\\Core\\BlogInterface::BLOG_UNDEFINED",
+            "type": "const",
+            "symbol": "Dotclear\\Interface\\Core\\BlogInterface::BLOG_UNDEFINED",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->blog()::UNDEFINED",
+            "note": "Deprecated: since 2.33, use App::status()->blog()::UNDEFINED instead"
+        },
+        {
+            "id": "const:Dotclear\\Interface\\Core\\BlogInterface::COMMENT_JUNK",
+            "type": "const",
+            "symbol": "Dotclear\\Interface\\Core\\BlogInterface::COMMENT_JUNK",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->comment()::JUNK",
+            "note": "Deprecated: since 2.33, use App::status()->comment()::JUNK instead"
+        },
+        {
+            "id": "const:Dotclear\\Interface\\Core\\BlogInterface::COMMENT_PENDING",
+            "type": "const",
+            "symbol": "Dotclear\\Interface\\Core\\BlogInterface::COMMENT_PENDING",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->comment()::PENDING",
+            "note": "Deprecated: since 2.33, use App::status()->comment()::PENDING instead"
+        },
+        {
+            "id": "const:Dotclear\\Interface\\Core\\BlogInterface::COMMENT_PUBLISHED",
+            "type": "const",
+            "symbol": "Dotclear\\Interface\\Core\\BlogInterface::COMMENT_PUBLISHED",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->comment()::PUBLISHED",
+            "note": "Deprecated: since 2.33, use App::status()->comment()::PUBLISHED instead"
+        },
+        {
+            "id": "const:Dotclear\\Interface\\Core\\BlogInterface::COMMENT_UNPUBLISHED",
+            "type": "const",
+            "symbol": "Dotclear\\Interface\\Core\\BlogInterface::COMMENT_UNPUBLISHED",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->comment()::UNPUBLISHED",
+            "note": "Deprecated: since 2.33, use App::status()->comment()::UNPUBLISHED instead"
+        },
+        {
+            "id": "const:Dotclear\\Interface\\Core\\BlogInterface::POST_PENDING",
+            "type": "const",
+            "symbol": "Dotclear\\Interface\\Core\\BlogInterface::POST_PENDING",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->post()::PENDING",
+            "note": "Deprecated: since 2.33, use App::status()->post()::PENDING instead"
+        },
+        {
+            "id": "const:Dotclear\\Interface\\Core\\BlogInterface::POST_PUBLISHED",
+            "type": "const",
+            "symbol": "Dotclear\\Interface\\Core\\BlogInterface::POST_PUBLISHED",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->post()::PUBLISHED",
+            "note": "Deprecated: since 2.33, use App::status()->post()::PUBLISHED instead"
+        },
+        {
+            "id": "const:Dotclear\\Interface\\Core\\BlogInterface::POST_SCHEDULED",
+            "type": "const",
+            "symbol": "Dotclear\\Interface\\Core\\BlogInterface::POST_SCHEDULED",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->post()::SCHEDULED",
+            "note": "Deprecated: since 2.33, use App::status()->post()::SCHEDULED instead"
+        },
+        {
+            "id": "const:Dotclear\\Interface\\Core\\BlogInterface::POST_UNPUBLISHED",
+            "type": "const",
+            "symbol": "Dotclear\\Interface\\Core\\BlogInterface::POST_UNPUBLISHED",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->post()::UNPUBLISHED",
+            "note": "Deprecated: since 2.33, use App::status()->post()::UNPUBLISHED instead"
+        },
+        {
+            "id": "const:Dotclear\\Interface\\Module\\ModulesInterface::MODULE_FILE_INIT",
+            "type": "const",
+            "symbol": "Dotclear\\Interface\\Module\\ModulesInterface::MODULE_FILE_INIT",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "My and a namespaced class to declare module for constants",
+            "note": "Deprecated: since 2.28, use My and a namespaced class to declare module for constants instead"
+        },
+        {
+            "id": "const:dcCore::SESSION_TABLE_NAME",
+            "type": "const",
+            "symbol": "dcCore::SESSION_TABLE_NAME",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::session()::SESSION_TABLE_NAME",
+            "note": "Constant removed, was deprecated: since 2.28, use App::session()::SESSION_TABLE_NAME"
+        },
+        {
+            "id": "const:dcCore::VERSION_TABLE_NAME",
+            "type": "const",
+            "symbol": "dcCore::VERSION_TABLE_NAME",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::version()::VERSION_TABLE_NAME",
+            "note": "Constant removed, was deprecated: since 2.28, use App::version()::VERSION_TABLE_NAME"
+        },
+        {
+            "id": "const:dcUtils::ADMIN_LOCALE",
+            "type": "const",
+            "symbol": "dcUtils::ADMIN_LOCALE",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::lexical()::ADMIN_LOCALE",
+            "note": "Constant removed, was deprecated: since 2.28, use App::lexical()::ADMIN_LOCALE instaed"
+        },
+        {
+            "id": "const:dcUtils::CUSTOM_LOCALE",
+            "type": "const",
+            "symbol": "dcUtils::CUSTOM_LOCALE",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::lexical()::CUSTOM_LOCALE",
+            "note": "Constant removed, was deprecated: since 2.28, use App::lexical()::CUSTOM_LOCALE instaed"
+        },
+        {
+            "id": "const:dcUtils::PUBLIC_LOCALE",
+            "type": "const",
+            "symbol": "dcUtils::PUBLIC_LOCALE",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::lexical()::PUBLIC_LOCALE",
+            "note": "Constant removed, was deprecated: since 2.28, use App::lexical()::PUBLIC_LOCALE instaed"
+        },
+        {
+            "id": "js:toggleWithDetails",
+            "type": "js",
+            "symbol": "$.fn.toggleWithDetails",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "dotclear.toggleWithDetails(element, options)",
+            "note": "jQuery plugin deprecated (admin/js/legacy.js)",
+            "pattern": "(?<!dotclear)\\.toggleWithDetails\\s*\\(",
+            "manual": true
+        },
+        {
+            "id": "js:toggleWithLegend",
+            "type": "js",
+            "symbol": "$.fn.toggleWithLegend",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "dotclear.toggleWithLegend(element, target, options)",
+            "note": "jQuery plugin deprecated (admin/js/legacy.js), no longer used by the core",
+            "pattern": "(?<!dotclear)\\.toggleWithLegend\\s*\\(",
+            "manual": true
+        },
+        {
+            "id": "method:Dotclear\\App::bootstrap",
+            "type": "method",
+            "symbol": "Dotclear\\App::bootstrap",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "new App('Utility', 'Process');",
+            "note": "Deprecated: Since 2.28, use new App('Utility', 'Process');",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Combos::getBlogStatusesCombo",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Combos::getBlogStatusesCombo",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->blog()->combo()",
+            "note": "Deprecated: since 2.33, use App::status()->blog()->combo() instead",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Combos::getCommentStatusesCombo",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Combos::getCommentStatusesCombo",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->comment()->combo()",
+            "note": "Deprecated: since 2.33, use App::status()->comment()->combo() instead",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Combos::getPostStatusesCombo",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Combos::getPostStatusesCombo",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->post()->combo()",
+            "note": "Deprecated: since 2.33, use App::status()->post()->combo() instead",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Favorite::largeIcon",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Favorite::largeIcon",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Favorite::dashboardIcon()",
+            "note": "Deprecated: since 2.39 use Favorite::dashboardIcon() instead",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Favorite::smallIcon",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Favorite::smallIcon",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Favorite::menuIcon()",
+            "note": "Deprecated: since 2.39 use Favorite::menuIcon() instead",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Filter\\FilterBlogs::getBlogStatusFilter",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Filter\\FilterBlogs::getBlogStatusFilter",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->blog()->filter()",
+            "note": "Deprecated: since 2.33, use App::status()->blog()->filter() instead",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Filter\\FilterComments::getCommentStatusFilter",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Filter\\FilterComments::getCommentStatusFilter",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->comment()->filter()",
+            "note": "Deprecated: since 2.33, use App::status()->comment()->filter() instead",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Filter\\FilterPosts::getPostStatusFilter",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Filter\\FilterPosts::getPostStatusFilter",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->post()->filter()",
+            "note": "Deprecated: since 2.33, use App::status()->post()->filter() instead",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Filter\\Filters::userOptions",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Filter\\Filters::userOptions",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "userOptionSortby(), userOptionOrder() or userOptionNb()",
+            "note": "Deprecated: since 2.39 use userOptionSortby(), userOptionOrder() or userOptionNb() instead",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Helper::addMenuItem",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Helper::addMenuItem",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::backend()->menus()->addItem()",
+            "note": "Deprecated: since 2.27, use App::backend()->menus()->addItem() instead",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\ModulesList::doSanitizeModule",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\ModulesList::doSanitizeModule",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "self::fillSanitizeModule()",
+            "note": "Deprecated: since 2.26, use self::fillSanitizeModule() instead",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\ModulesList::getModules",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\ModulesList::getModules",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "self::getDefines()",
+            "note": "Deprecated: since 2.26, use self::getDefines() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\ModulesList::isDistributedModule",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\ModulesList::isDistributedModule",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Modules::getDefine($id)->distributed",
+            "note": "Deprecated: since 2.26, use Modules::getDefine($id)->distributed instead",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\ModulesList::sanitizeModule",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\ModulesList::sanitizeModule",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "self::fillSanitizeModule()",
+            "note": "Deprecated: since 2.26, use self::fillSanitizeModule() instead",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\ModulesList::setModules",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\ModulesList::setModules",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "self::setDefines()",
+            "note": "Deprecated: since 2.26, use self::setDefines() instead",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\ModulesList::sortModules",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\ModulesList::sortModules",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "something like uasort($defines, fn ($a, $b) => $a->get($field) <=> $b->get($field));",
+            "note": "Deprecated: since 2.26, use something like uasort($defines, fn ($a, $b) => $a->get($field) <=> $b->get($field)); instead",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Notices::addNotice",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Notices::addNotice",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Notices::addNewNotice()",
+            "note": "Deprecated: since 2.39 Use Notices::addNewNotice() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Page::addErrorNotice",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Page::addErrorNotice",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::backend()->notices()->addErrorNotice()",
+            "note": "Deprecated: since 2.27, use App::backend()->notices()->addErrorNotice() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Page::addMessageNotice",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Page::addMessageNotice",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::backend()->notices()->addMessageNotice()",
+            "note": "Deprecated: since 2.27, use App::backend()->notices()->addMessageNotice() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Page::addSuccessNotice",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Page::addSuccessNotice",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::backend()->notices()->addSuccessNotice()",
+            "note": "Deprecated: since 2.27, use App::backend()->notices()->addSuccessNotice() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Page::addWarningNotice",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Page::addWarningNotice",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::backend()->notices()->addWarningNotice()",
+            "note": "Deprecated: since 2.27, use App::backend()->notices()->addWarningNotice() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Page::cssModuleLoad",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Page::cssModuleLoad",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "My::cssLoad()",
+            "note": "Deprecated: since 2.27, use My::cssLoad() instead",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Page::error",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Page::error",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::backend()->notices()->error()",
+            "note": "Deprecated: since 2.27, use App::backend()->notices()->error() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Page::help",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Page::help",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "",
+            "note": "Deprecated: since 2.24, permanetly removed",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Page::jsColorPicker",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Page::jsColorPicker",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "",
+            "note": "Deprecated: since 2.16, permanetly removed",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Page::jsDatePicker",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Page::jsDatePicker",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "",
+            "note": "Deprecated: since 2.21, permanetly removed",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Page::jsLoadIE7",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Page::jsLoadIE7",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "",
+            "note": "Deprecated: since 2.11, permanetly removed",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Page::jsModuleLoad",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Page::jsModuleLoad",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "My::jsLoad() intead",
+            "note": "Deprecated: since 2.27, use My::jsLoad() intead",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Page::jsToolBar",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Page::jsToolBar",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "",
+            "note": "Deprecated: since 2.??, permanetly removed",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Page::jsVar",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Page::jsVar",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::backend()->page()->jsJson() and dotclear.getData()/dotclear.mergeDeep() in javascript",
+            "note": "Deprecated: since 2.15, use App::backend()->page()->jsJson() and dotclear.getData()/dotclear.mergeDeep() in javascript instead",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Page::jsVars",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Page::jsVars",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::backend()->page()->jsJson() and dotclear.getData()/dotclear.mergeDeep() in javascript intead",
+            "note": "Deprecated: since 2.15, use App::backend()->page()->jsJson() and dotclear.getData()/dotclear.mergeDeep() in javascript intead",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Page::message",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Page::message",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::backend()->notices()->message()",
+            "note": "Deprecated: since 2.27, use App::backend()->notices()->message() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Page::notices",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Page::notices",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::backend()->notices()->getNotices()",
+            "note": "Deprecated: since 2.27, use App::backend()->notices()->getNotices() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Page::success",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Page::success",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::backend()->notices()->success()",
+            "note": "Deprecated: since 2.27, use App::backend()->notices()->success() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Page::warning",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Page::warning",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::backend()->notices()->warning()",
+            "note": "Deprecated: since 2.27, use App::backend()->notices()->warning() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Url::decode",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Url::decode",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "",
+            "note": "Deprecated: should be used carefully, parameters are no more escaped",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Core\\Blogs::getAllBlogStatus",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Blogs::getAllBlogStatus",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->blog()->statuses()",
+            "note": "Deprecated: since 2.33, use App::status()->blog()->statuses() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Core\\Blogs::getBlogStatus",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Blogs::getBlogStatus",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->blog()->name($s)",
+            "note": "Deprecated: since 2.33, use App::status()->blog()->name($s) instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Core\\Core::con",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Core::con",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "",
+            "note": "Deprecated: since 2.36, This is a long term alias for App::db()->con();",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Core\\Frontend\\Ctx::global_filter",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Frontend\\Ctx::global_filter",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Ctx::global_filters",
+            "note": "Deprecated: since version 2.11 , use Ctx::global_filters instead",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Frontend\\TplBlogTrait::BlogParentThemeURL",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Frontend\\TplBlogTrait::BlogParentThemeURL",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "BlogThemeURL()",
+            "note": "Deprecated: since 2.35 Use BlogThemeURL() instead as it will now look for custom > theme > parent theme > template set",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Frontend\\TplBlogTrait::BlogRSDURL",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Frontend\\TplBlogTrait::BlogRSDURL",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "another format",
+            "note": "Deprecated: since 2.24, use another format instead !",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Install\\Utils::blogDefaults",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Install\\Utils::blogDefaults",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::blogs()->blogDefaults()",
+            "note": "Deprecated: Since 2.33 Use App::blogs()->blogDefaults() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Core\\Install\\Utils::dbSchema",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Install\\Utils::dbSchema",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Schema::fillStructure()",
+            "note": "Deprecated: Since 2.33 Use Schema::fillStructure()",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Log::getTable",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Log::getTable",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::log()::LOG_TABLE_NAME",
+            "note": "Deprecated: since 2.28, use App::log()::LOG_TABLE_NAME instead",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Notice::delNotices",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Notice::delNotices",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "self::delNotice() or self::delSessionNotices()",
+            "note": "Deprecated: since 2.28 use self::delNotice() or self::delSessionNotices()",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Core\\PostType::get",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\PostType::get",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "getXXX()",
+            "note": "Deprecated: since 2.40, use getXXX() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Core\\PostType::icon",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\PostType::icon",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "getIcon()",
+            "note": "Deprecated: since 2.40, use getIcon() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Core\\PostType::iconDark",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\PostType::iconDark",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "getIconDark()",
+            "note": "Deprecated: since 2.40, use getIconDark() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Database\\Cursor::__get",
+            "type": "method",
+            "symbol": "Dotclear\\Database\\Cursor::__get",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "strField()/intField()/boolField()/floatField()/getField()",
+            "note": "Deprecated: since 2.40 use strField()/intField()/boolField()/floatField()/getField() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Database\\Cursor::__set",
+            "type": "method",
+            "symbol": "Dotclear\\Database\\Cursor::__set",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "setStrField()/setIntField()/setBoolField()/setFloatField()/setField()",
+            "note": "Deprecated: since 2.40 use setStrField()/setIntField()/setBoolField()/setFloatField()/setField() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Database\\MetaRecord::toExtStatic",
+            "type": "method",
+            "symbol": "Dotclear\\Database\\MetaRecord::toExtStatic",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "toStatic()",
+            "note": "Deprecated: Since 2.26 use toStatic() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Database\\Structure::__get",
+            "type": "method",
+            "symbol": "Dotclear\\Database\\Structure::__get",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "table() method",
+            "note": "Deprecated: since 2.39 It's recommended to use table() method instead.",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Helper\\Clearbricks::add",
+            "type": "method",
+            "symbol": "Dotclear\\Helper\\Clearbricks::add",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "namespaces",
+            "note": "Deprecated: Since 2.26, use namespaces instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Helper\\Clearbricks::autoload",
+            "type": "method",
+            "symbol": "Dotclear\\Helper\\Clearbricks::autoload",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "namespaces",
+            "note": "Deprecated: Since 2.26, use namespaces instead",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Helper\\Clearbricks::lib",
+            "type": "method",
+            "symbol": "Dotclear\\Helper\\Clearbricks::lib",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "",
+            "note": "Deprecated: Since 2.26",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Helper\\File\\Manager::setExcludePattern",
+            "type": "method",
+            "symbol": "Dotclear\\Helper\\File\\Manager::setExcludePattern",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "addExcludePattern()",
+            "note": "Deprecated: use addExcludePattern() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Helper\\Html\\Form\\Component::__call",
+            "type": "method",
+            "symbol": "Dotclear\\Helper\\Html\\Form\\Component::__call",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "",
+            "note": "Deprecated: since 2.41",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Helper\\Html\\Form\\Component::__get",
+            "type": "method",
+            "symbol": "Dotclear\\Helper\\Html\\Form\\Component::__get",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "",
+            "note": "Deprecated: since 2.41",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Helper\\Html\\Form\\Component::__invoke",
+            "type": "method",
+            "symbol": "Dotclear\\Helper\\Html\\Form\\Component::__invoke",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "render() method",
+            "note": "Deprecated: since 2.41 use render() method instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Helper\\Html\\Form\\Component::__isset",
+            "type": "method",
+            "symbol": "Dotclear\\Helper\\Html\\Form\\Component::__isset",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "",
+            "note": "Deprecated: since 2.41",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Helper\\Html\\Form\\Component::__set",
+            "type": "method",
+            "symbol": "Dotclear\\Helper\\Html\\Form\\Component::__set",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "",
+            "note": "Deprecated: since 2.41",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Helper\\Html\\Form\\Component::__unset",
+            "type": "method",
+            "symbol": "Dotclear\\Helper\\Html\\Form\\Component::__unset",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "",
+            "note": "Deprecated: since 2.41",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Helper\\Html\\Form\\Component::attachLabel",
+            "type": "method",
+            "symbol": "Dotclear\\Helper\\Html\\Form\\Component::attachLabel",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "label() to attach a label to a component",
+            "note": "Deprecated: since 2.41 Use label() to attach a label to a component",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Helper\\Html\\Form\\Component::detachLabel",
+            "type": "method",
+            "symbol": "Dotclear\\Helper\\Html\\Form\\Component::detachLabel",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "",
+            "note": "Deprecated: since 2.41",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Helper\\WebAuthn\\Attestation\\Format\\Tpm::__construct",
+            "type": "method",
+            "symbol": "Dotclear\\Helper\\WebAuthn\\Attestation\\Format\\Tpm::__construct",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "",
+            "note": "More required parameters: (AuthenticatorInterface $authenticator, protected ByteBufferInterface $buffer)",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Core\\AuthInterface::getOption",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Core\\AuthInterface::getOption",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "user preferences",
+            "note": "Deprecated: since 2.39 Use user preferences instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Core\\AuthInterface::getOptions",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Core\\AuthInterface::getOptions",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "user preferences",
+            "note": "Deprecated: since 2.39 Use user preferences instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Core\\BlogInterface::getAllCommentStatus",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Core\\BlogInterface::getAllCommentStatus",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->comment()->statuses()",
+            "note": "Deprecated: since 2.33, use App::status()->comment()->statuses() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Core\\BlogInterface::getAllPostStatus",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Core\\BlogInterface::getAllPostStatus",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->post()->statuses()",
+            "note": "Deprecated: since 2.33, use App::status()->post()->statuses() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Core\\BlogInterface::getPostStatus",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Core\\BlogInterface::getPostStatus",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->post()->name($status)",
+            "note": "Deprecated: since 2.33, use App::status()->post()->name($status) instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Core\\BlogSettingsInterface::addNamespace",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Core\\BlogSettingsInterface::addNamespace",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "self::addWorkspace()",
+            "note": "Deprecated: since 2.28, use self::addWorkspace() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Core\\BlogSettingsInterface::delNamespace",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Core\\BlogSettingsInterface::delNamespace",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "self::delWorkspace()",
+            "note": "Deprecated: since 2.28, use self::delWorkspace() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Core\\BlogSettingsInterface::dumpNamespaces",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Core\\BlogSettingsInterface::dumpNamespaces",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "self::dumpWorkspaces()",
+            "note": "Deprecated: since 2.28, use self::dumpWorkspaces() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Core\\BlogSettingsInterface::renNamespace",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Core\\BlogSettingsInterface::renNamespace",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "self::renWorkspace()",
+            "note": "Deprecated: since 2.28, use self::renWorkspace() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Core\\BlogWorkspaceInterface::dumpNamespace",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Core\\BlogWorkspaceInterface::dumpNamespace",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "self::dumpWorkspace()",
+            "note": "Deprecated: since 2.28, use self::dumpWorkspace() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Core\\BlogsInterface::getAllBlogStatus",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Core\\BlogsInterface::getAllBlogStatus",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->blog()->statuses()",
+            "note": "Deprecated: since 2.33, use App::status()->blog()->statuses() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Core\\BlogsInterface::getBlogStatus",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Core\\BlogsInterface::getBlogStatus",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::status()->blog()->name($s)",
+            "note": "Deprecated: since 2.33, use App::status()->blog()->name($s) instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Core\\NoticeInterface::delNotices",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Core\\NoticeInterface::delNotices",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "self::delNotice() or self::delSesionNotices()",
+            "note": "Deprecated: since 2.28, use self::delNotice() or self::delSesionNotices() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Core\\PostTypeInterface::get",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Core\\PostTypeInterface::get",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "getXXX()",
+            "note": "Deprecated: since 2.40, use getXXX() instead (see below)",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Core\\PostTypeInterface::icon",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Core\\PostTypeInterface::icon",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "getIcon()",
+            "note": "Deprecated: since 2.40, use getIcon() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Core\\PostTypeInterface::iconDark",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Core\\PostTypeInterface::iconDark",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "getIconDark()",
+            "note": "Deprecated: since 2.40, use getIconDark() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Core\\ThemesInterface::isOverloadable",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Core\\ThemesInterface::isOverloadable",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "",
+            "note": "Deprecated: since 2.36 all themes are overloadable",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Database\\ConnectionInterface::escape",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Database\\ConnectionInterface::escape",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "escapeStr() method",
+            "note": "Deprecated: since 2.39 Use escapeStr() method instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Helper\\L10nInterface::legacy",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Helper\\L10nInterface::legacy",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "",
+            "note": "Deprecated: since 2.39",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Module\\ModulesInterface::getAnyModules",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Module\\ModulesInterface::getAnyModules",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "self::getDefines()",
+            "note": "Deprecated: since 2.26, use self::getDefines() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Module\\ModulesInterface::getDisabledModules",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Module\\ModulesInterface::getDisabledModules",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "self::getDefines()",
+            "note": "Deprecated: since 2.26, use self::getDefines() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Module\\ModulesInterface::getHardDisabledModules",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Module\\ModulesInterface::getHardDisabledModules",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "self::getDefines()",
+            "note": "Deprecated: since 2.26, use self::getDefines() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Module\\ModulesInterface::getModules",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Module\\ModulesInterface::getModules",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "self::getDefines()",
+            "note": "Deprecated: since 2.26, use self::getDefines() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Module\\ModulesInterface::getSoftDisabledModules",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Module\\ModulesInterface::getSoftDisabledModules",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "self::getDefines()",
+            "note": "Deprecated: since 2.26, use self::getDefines() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Module\\ModulesInterface::loadNsFiles",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Module\\ModulesInterface::loadNsFiles",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "nothing",
+            "note": "Deprecated: since 2.27, use nothing instead !",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Interface\\Module\\ModulesInterface::moduleRoot",
+            "type": "method",
+            "symbol": "Dotclear\\Interface\\Module\\ModulesInterface::moduleRoot",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "self::moduleInfo()",
+            "note": "Deprecated: since 2.26, use self::moduleInfo() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Module\\Modules::getAnyModules",
+            "type": "method",
+            "symbol": "Dotclear\\Module\\Modules::getAnyModules",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::plugins()->getDefines([], true) or App::themes()->getDefines([], true)",
+            "note": "Deprecated: Since 2.26, use App::plugins()->getDefines([], true) or App::themes()->getDefines([], true) instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Module\\Modules::getDisabledModules",
+            "type": "method",
+            "symbol": "Dotclear\\Module\\Modules::getDisabledModules",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::plugins()->getDefines() or App::themes()->getDefines()",
+            "note": "Deprecated: Since 2.26, use App::plugins()->getDefines() or App::themes()->getDefines() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Module\\Modules::getHardDisabledModules",
+            "type": "method",
+            "symbol": "Dotclear\\Module\\Modules::getHardDisabledModules",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::plugins()->getDefines() or App::themes()->getDefines()",
+            "note": "Deprecated: Since 2.26, use App::plugins()->getDefines() or App::themes()->getDefines() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Module\\Modules::getModules",
+            "type": "method",
+            "symbol": "Dotclear\\Module\\Modules::getModules",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::plugins()->getDefines(…) or App::themes()->getDefines(…)",
+            "note": "Deprecated: Since 2.26, use App::plugins()->getDefines(…) or App::themes()->getDefines(…) instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Module\\Modules::getSoftDisabledModules",
+            "type": "method",
+            "symbol": "Dotclear\\Module\\Modules::getSoftDisabledModules",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::plugins()->getDefines() or App::themes()->getDefines()",
+            "note": "Deprecated: Since 2.26, use App::plugins()->getDefines() or App::themes()->getDefines() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Module\\Modules::loadNsFiles",
+            "type": "method",
+            "symbol": "Dotclear\\Module\\Modules::loadNsFiles",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "",
+            "note": "Deprecated: Since 2.27",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Module\\Modules::moduleRoot",
+            "type": "method",
+            "symbol": "Dotclear\\Module\\Modules::moduleRoot",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "App::plugins()->moduleInfo() or App::themes()->moduleInfo()",
+            "note": "Deprecated: Since 2.26, use App::plugins()->moduleInfo() or App::themes()->moduleInfo() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Module\\Store::get",
+            "type": "method",
+            "symbol": "Dotclear\\Module\\Store::get",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "self::getDefines()",
+            "note": "Deprecated: since 2.26, use self::getDefines() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Module\\Store::search",
+            "type": "method",
+            "symbol": "Dotclear\\Module\\Store::search",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "self::searchDefines()",
+            "note": "Deprecated: since 2.26, use self::searchDefines() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Module\\StoreParser::getModules",
+            "type": "method",
+            "symbol": "Dotclear\\Module\\StoreParser::getModules",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "self::getDefines()",
+            "note": "Deprecated: since 2.26, use self::getDefines() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Process\\Backend\\Home::process",
+            "type": "method",
+            "symbol": "Dotclear\\Process\\Backend\\Home::process",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "of logout=1 in URL since 2.27, use App::backend()->url()->redirect('admin.logout');",
+            "note": "Deprecated: use of logout=1 in URL since 2.27, use App::backend()->url()->redirect('admin.logout'); instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Process\\Backend\\Rest::searchMeta",
+            "type": "method",
+            "symbol": "Dotclear\\Process\\Backend\\Rest::searchMeta",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "searchMetadata",
+            "note": "Deprecated: Since 2.29, use searchMetadata instead",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Schema\\Extension\\Blog::toExtStatic",
+            "type": "method",
+            "symbol": "Dotclear\\Schema\\Extension\\Blog::toExtStatic",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "MetaRecord::toStatic()",
+            "note": "Deprecated: since 2.39 use MetaRecord::toStatic() instead",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Schema\\Extension\\User::options",
+            "type": "method",
+            "symbol": "Dotclear\\Schema\\Extension\\User::options",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "user preferences rather than this field",
+            "note": "Deprecated: 2.40 it's recommended to use user preferences rather than this field",
+            "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Schema\\Extension\\User::toExtStatic",
+            "type": "method",
+            "symbol": "Dotclear\\Schema\\Extension\\User::toExtStatic",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "MetaRecord::toStatic()",
+            "note": "Deprecated: since 2.39 use MetaRecord::toStatic() instead",
+            "unique": false
+        },
+        {
+            "id": "method:dcCore::HTMLfilter",
+            "type": "method",
+            "symbol": "dcCore::HTMLfilter",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::filter()->HTMLfilter()",
+            "note": "Method removed, was deprecated: since 2.28, use App::filter()->HTMLfilter() instead"
+        },
+        {
+            "id": "method:dcCore::addBehavior",
+            "type": "method",
+            "symbol": "dcCore::addBehavior",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::behavior()->addBehavior()",
+            "note": "Method removed, was deprecated: since 2.28, use App::behavior()->addBehavior() instead"
+        },
+        {
+            "id": "method:dcCore::addBehaviors",
+            "type": "method",
+            "symbol": "dcCore::addBehaviors",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::behavior()->addBehaviors()",
+            "note": "Method removed, was deprecated: since 2.28, use App::behavior()->addBehaviors() instead"
+        },
+        {
+            "id": "method:dcCore::addBehaviour",
+            "type": "method",
+            "symbol": "dcCore::addBehaviour",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::behavior()->addBehavior()",
+            "note": "Method removed, was deprecated: since 2.28, use App::behavior()->addBehavior() instead"
+        },
+        {
+            "id": "method:dcCore::addBehaviours",
+            "type": "method",
+            "symbol": "dcCore::addBehaviours",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::behavior()->addBehaviors()",
+            "note": "Method removed, was deprecated: since 2.28, use App::behavior()->addBehaviors() instead"
+        },
+        {
+            "id": "method:dcCore::addBlog",
+            "type": "method",
+            "symbol": "dcCore::addBlog",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::blogs()->addBlog()",
+            "note": "Method removed, was deprecated: since 2.28, use App::blogs()->addBlog() instead"
+        },
+        {
+            "id": "method:dcCore::addEditorFormater",
+            "type": "method",
+            "symbol": "dcCore::addEditorFormater",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::formater()->addEditorFormater()",
+            "note": "Method removed, was deprecated: since 2.28, use App::formater()->addEditorFormater() instead"
+        },
+        {
+            "id": "method:dcCore::addFormater",
+            "type": "method",
+            "symbol": "dcCore::addFormater",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::formater()->addEditorFormater('dcLegacyEditor', ...)",
+            "note": "Method removed, was deprecated: since 2.28, use App::formater()->addEditorFormater('dcLegacyEditor', ...) instead"
+        },
+        {
+            "id": "method:dcCore::addFormaterName",
+            "type": "method",
+            "symbol": "dcCore::addFormaterName",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::formater()->addFormaterName()",
+            "note": "Method removed, was deprecated: since 2.28, use App::formater()->addFormaterName() instead"
+        },
+        {
+            "id": "method:dcCore::addUser",
+            "type": "method",
+            "symbol": "dcCore::addUser",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::users()->addUser()",
+            "note": "Method removed, was deprecated: since 2.28, use App::users()->addUser() instead"
+        },
+        {
+            "id": "method:dcCore::app",
+            "type": "method",
+            "symbol": "dcCore::app",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "",
+            "note": "Method removed, was deprecated: since 2.28, nothing to use instead"
+        },
+        {
+            "id": "method:dcCore::blogDefaults",
+            "type": "method",
+            "symbol": "dcCore::blogDefaults",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::blogs()->blogDefault()",
+            "note": "Method removed, was deprecated: since 2.28, use App::blogs()->blogDefault() instead"
+        },
+        {
+            "id": "method:dcCore::blogExists",
+            "type": "method",
+            "symbol": "dcCore::blogExists",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::blogs()->blogExists()",
+            "note": "Method removed, was deprecated: since 2.28, use App::blogs()->blogExists() instead"
+        },
+        {
+            "id": "method:dcCore::callBehavior",
+            "type": "method",
+            "symbol": "dcCore::callBehavior",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::behavior()->callBehavior()",
+            "note": "Method removed, was deprecated: since 2.28, use App::behavior()->callBehavior() instead"
+        },
+        {
+            "id": "method:dcCore::callBehaviour",
+            "type": "method",
+            "symbol": "dcCore::callBehaviour",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::behavior()->callBehavior()",
+            "note": "Method removed, was deprecated: since 2.28, use App::behavior()->callBehavior() instead"
+        },
+        {
+            "id": "method:dcCore::callEditorFormater",
+            "type": "method",
+            "symbol": "dcCore::callEditorFormater",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::formater()->callEditorFormater()",
+            "note": "Method removed, was deprecated: since 2.28, use App::formater()->callEditorFormater() instead"
+        },
+        {
+            "id": "method:dcCore::callFormater",
+            "type": "method",
+            "symbol": "dcCore::callFormater",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::formater()->callEditorFormater('dcLegacyEditor', ...)",
+            "note": "Method removed, was deprecated: since 2.28, use App::formater()->callEditorFormater('dcLegacyEditor', ...) instead"
+        },
+        {
+            "id": "method:dcCore::checkNonce",
+            "type": "method",
+            "symbol": "dcCore::checkNonce",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::nonce()->checkNonce()",
+            "note": "Method removed, was deprecated: since 2.28, use App::nonce()->checkNonce() instead"
+        },
+        {
+            "id": "method:dcCore::countAllComments",
+            "type": "method",
+            "symbol": "dcCore::countAllComments",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "",
+            "note": "Method removed, was deprecated: since 2.28, permanently moved to plugin maintenance"
+        },
+        {
+            "id": "method:dcCore::countBlogPosts",
+            "type": "method",
+            "symbol": "dcCore::countBlogPosts",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::blogs()->countBlogPosts()",
+            "note": "Method removed, was deprecated: since 2.28, use App::blogs()->countBlogPosts() instead"
+        },
+        {
+            "id": "method:dcCore::delBlog",
+            "type": "method",
+            "symbol": "dcCore::delBlog",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::blogs()->delBlog()",
+            "note": "Method removed, was deprecated: since 2.28, use App::blogs()->delBlog() instead"
+        },
+        {
+            "id": "method:dcCore::delUser",
+            "type": "method",
+            "symbol": "dcCore::delUser",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::users()->delUser()",
+            "note": "Method removed, was deprecated: since 2.28, use App::users()->delUser() instead"
+        },
+        {
+            "id": "method:dcCore::delVersion",
+            "type": "method",
+            "symbol": "dcCore::delVersion",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::version()->unsetVersion()",
+            "note": "Method removed, was deprecated: since 2.28, use App::version()->unsetVersion() instead"
+        },
+        {
+            "id": "method:dcCore::emptyTemplatesCache",
+            "type": "method",
+            "symbol": "dcCore::emptyTemplatesCache",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::cache()->emptyTemplatesCache()",
+            "note": "Method removed, was deprecated: since 2.28, use App::cache()->emptyTemplatesCache() instead"
+        },
+        {
+            "id": "method:dcCore::enableRestServer",
+            "type": "method",
+            "symbol": "dcCore::enableRestServer",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::rest()->enableRestServer()",
+            "note": "Method removed, was deprecated: since 2.28, use App::rest()->enableRestServer() instead"
+        },
+        {
+            "id": "method:dcCore::formNonce",
+            "type": "method",
+            "symbol": "dcCore::formNonce",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::nonce()->formNonce() or App::nonce()->getFormNonce()",
+            "note": "Method removed, was deprecated: since 2.28, use App::nonce()->formNonce() or App::nonce()->getFormNonce()instead"
+        },
+        {
+            "id": "method:dcCore::getAllBlogStatus",
+            "type": "method",
+            "symbol": "dcCore::getAllBlogStatus",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::status()->blog()->statuses()",
+            "note": "Method removed, was deprecated: since 2.28, use App::status()->blog()->statuses() instead"
+        },
+        {
+            "id": "method:dcCore::getBehaviors",
+            "type": "method",
+            "symbol": "dcCore::getBehaviors",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::behavior()->getBehaviors() or App::behavior()->getBehavior()",
+            "note": "Method removed, was deprecated: since 2.28, use App::behavior()->getBehaviors() or App::behavior()->getBehavior()instead"
+        },
+        {
+            "id": "method:dcCore::getBehaviours",
+            "type": "method",
+            "symbol": "dcCore::getBehaviours",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::behavior()->getBehaviors() or App::behavior()->getBehavior()",
+            "note": "Method removed, was deprecated: since 2.28, use App::behavior()->getBehaviors() or App::behavior()->getBehavior() instead"
+        },
+        {
+            "id": "method:dcCore::getBlog",
+            "type": "method",
+            "symbol": "dcCore::getBlog",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::blogs()->getBlogPermissions()",
+            "note": "Method removed, was deprecated: since 2.28, use App::blogs()->getBlogPermissions() instead"
+        },
+        {
+            "id": "method:dcCore::getBlogPermissions",
+            "type": "method",
+            "symbol": "dcCore::getBlogPermissions",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::blogs()->getBlogPermissions()",
+            "note": "Method removed, was deprecated: since 2.28, use App::blogs()->getBlogPermissions() instead"
+        },
+        {
+            "id": "method:dcCore::getBlogStatus",
+            "type": "method",
+            "symbol": "dcCore::getBlogStatus",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::status()->blog()->name($s)",
+            "note": "Method removed, was deprecated: since 2.28, use App::status()->blog()->name($s) instead"
+        },
+        {
+            "id": "method:dcCore::getBlogs",
+            "type": "method",
+            "symbol": "dcCore::getBlogs",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::blogs()->getBlogs()",
+            "note": "Method removed, was deprecated: since 2.28, use App::blogs()->getBlogs() instead"
+        },
+        {
+            "id": "method:dcCore::getEditors",
+            "type": "method",
+            "symbol": "dcCore::getEditors",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::formater()->getEditors()",
+            "note": "Method removed, was deprecated: since 2.28, use App::formater()->getEditors() instead"
+        },
+        {
+            "id": "method:dcCore::getFormaterName",
+            "type": "method",
+            "symbol": "dcCore::getFormaterName",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::formater()->getFormaterName()",
+            "note": "Method removed, was deprecated: since 2.28, use App::formater()->getFormaterName() instead"
+        },
+        {
+            "id": "method:dcCore::getFormaters",
+            "type": "method",
+            "symbol": "dcCore::getFormaters",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::formater()->getFormaters() or App::formater()->getFormater(xxx)",
+            "note": "Method removed, was deprecated: since 2.28, use App::formater()->getFormaters() or App::formater()->getFormater(xxx) instead"
+        },
+        {
+            "id": "method:dcCore::getNonce",
+            "type": "method",
+            "symbol": "dcCore::getNonce",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::nonce()->getNonce()",
+            "note": "Method removed, was deprecated: since 2.28, use App::nonce()->getNonce() instead"
+        },
+        {
+            "id": "method:dcCore::getPostAdminURL",
+            "type": "method",
+            "symbol": "dcCore::getPostAdminURL",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::postTypes()->get($type)->adminUrl()",
+            "note": "Method removed, was deprecated: since 2.28, use App::postTypes()->get($type)->adminUrl() instead"
+        },
+        {
+            "id": "method:dcCore::getPostPublicURL",
+            "type": "method",
+            "symbol": "dcCore::getPostPublicURL",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::postTypes()->get($type)->publicUrl()",
+            "note": "Method removed, was deprecated: since 2.28, use App::postTypes()->get($type)->publicUrl() instead"
+        },
+        {
+            "id": "method:dcCore::getPostTypes",
+            "type": "method",
+            "symbol": "dcCore::getPostTypes",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::postTypes()->dump()",
+            "note": "Method removed, was deprecated: since 2.28, use App::postTypes()->dump() instead"
+        },
+        {
+            "id": "method:dcCore::getUser",
+            "type": "method",
+            "symbol": "dcCore::getUser",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::users()->getUser()",
+            "note": "Method removed, was deprecated: since 2.28, use App::users()->getUser() instead"
+        },
+        {
+            "id": "method:dcCore::getUserPermissions",
+            "type": "method",
+            "symbol": "dcCore::getUserPermissions",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::users()->getUserPermissions()",
+            "note": "Method removed, was deprecated: since 2.28, use App::users()->getUserPermissions() instead"
+        },
+        {
+            "id": "method:dcCore::getUsers",
+            "type": "method",
+            "symbol": "dcCore::getUsers",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::users()->getUsers()",
+            "note": "Method removed, was deprecated: since 2.28, use App::users()->getUsers() instead"
+        },
+        {
+            "id": "method:dcCore::getVersion",
+            "type": "method",
+            "symbol": "dcCore::getVersion",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::version()->getVersion()",
+            "note": "Method removed, was deprecated: since 2.28, use App::version()->getVersion() instead"
+        },
+        {
+            "id": "method:dcCore::getVersions",
+            "type": "method",
+            "symbol": "dcCore::getVersions",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::version()->getVersions()",
+            "note": "Method removed, was deprecated: since 2.28, use App::version()->getVersions() instead"
+        },
+        {
+            "id": "method:dcCore::hasBehavior",
+            "type": "method",
+            "symbol": "dcCore::hasBehavior",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::behavior()->hasBehavior()",
+            "note": "Method removed, was deprecated: since 2.28, use App::behavior()->hasBehavior() instead"
+        },
+        {
+            "id": "method:dcCore::hasBehaviour",
+            "type": "method",
+            "symbol": "dcCore::hasBehaviour",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::behavior()->hasBehavior()",
+            "note": "Method removed, was deprecated: since 2.28, use App::behavior()->hasBehavior() instead"
+        },
+        {
+            "id": "method:dcCore::indexAllComments",
+            "type": "method",
+            "symbol": "dcCore::indexAllComments",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "",
+            "note": "Method removed, was deprecated: since 2.28, permanently moved to plugin maintenance"
+        },
+        {
+            "id": "method:dcCore::indexAllPosts",
+            "type": "method",
+            "symbol": "dcCore::indexAllPosts",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "",
+            "note": "Method removed, was deprecated: since 2.28, permanently moved to plugin maintenance"
+        },
+        {
+            "id": "method:dcCore::initWikiComment",
+            "type": "method",
+            "symbol": "dcCore::initWikiComment",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::filter()->initWikiComment()",
+            "note": "Method removed, was deprecated: since 2.28, use App::filter()->initWikiComment() instead"
+        },
+        {
+            "id": "method:dcCore::initWikiPost",
+            "type": "method",
+            "symbol": "dcCore::initWikiPost",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::filter()->initWikiPost()",
+            "note": "Method removed, was deprecated: since 2.28, use App::filter()->initWikiPost() instead"
+        },
+        {
+            "id": "method:dcCore::initWikiSimpleComment",
+            "type": "method",
+            "symbol": "dcCore::initWikiSimpleComment",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::filter()->initWikiSimpleComment()",
+            "note": "Method removed, was deprecated: since 2.28, use App::filter()->initWikiSimpleComment() instead"
+        },
+        {
+            "id": "method:dcCore::killAdminSession",
+            "type": "method",
+            "symbol": "dcCore::killAdminSession",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::backend()->killAdminSession()",
+            "note": "Method removed, was deprecated: since 2.28, use App::backend()->killAdminSession() instead"
+        },
+        {
+            "id": "method:dcCore::newVersion",
+            "type": "method",
+            "symbol": "dcCore::newVersion",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::version()->newerVersion()",
+            "note": "Method removed, was deprecated: since 2.28, use App::version()->newerVersion() instead"
+        },
+        {
+            "id": "method:dcCore::removeUsersDefaultBlogs",
+            "type": "method",
+            "symbol": "dcCore::removeUsersDefaultBlogs",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::users()->removeUsersDefaultBlogs()",
+            "note": "Method removed, was deprecated: since 2.28, use App::users()->removeUsersDefaultBlogs() instead"
+        },
+        {
+            "id": "method:dcCore::serveRestRequests",
+            "type": "method",
+            "symbol": "dcCore::serveRestRequests",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::rest()->serveRestRequests()",
+            "note": "Method removed, was deprecated: since 2.28, use App::rest()->serveRestRequests() instead"
+        },
+        {
+            "id": "method:dcCore::setBlog",
+            "type": "method",
+            "symbol": "dcCore::setBlog",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::blog()->loadFromBlog()",
+            "note": "Method removed, was deprecated: since 2.28, use App::blog()->loadFromBlog() instead"
+        },
+        {
+            "id": "method:dcCore::setPostType",
+            "type": "method",
+            "symbol": "dcCore::setPostType",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::postTypes()->set(new PostType())",
+            "note": "Method removed, was deprecated: since 2.28, use App::postTypes()->set(new PostType()) instead"
+        },
+        {
+            "id": "method:dcCore::setUserBlogPermissions",
+            "type": "method",
+            "symbol": "dcCore::setUserBlogPermissions",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::users()->setUserBlogPermissions()",
+            "note": "Method removed, was deprecated: since 2.28, use App::users()->setUserBlogPermissions() instead"
+        },
+        {
+            "id": "method:dcCore::setUserDefaultBlog",
+            "type": "method",
+            "symbol": "dcCore::setUserDefaultBlog",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::users()->setUserDefaultBlog()",
+            "note": "Method removed, was deprecated: since 2.28, use App::users()->setUserDefaultBlog() instead"
+        },
+        {
+            "id": "method:dcCore::setUserPermissions",
+            "type": "method",
+            "symbol": "dcCore::setUserPermissions",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::users()->setUserPermissions()",
+            "note": "Method removed, was deprecated: since 2.28, use App::users()->setUserPermissions() instead"
+        },
+        {
+            "id": "method:dcCore::setVersion",
+            "type": "method",
+            "symbol": "dcCore::setVersion",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::version()->setVersion()",
+            "note": "Method removed, was deprecated: since 2.28, use App::version()->setVersion() instead"
+        },
+        {
+            "id": "method:dcCore::testVersion",
+            "type": "method",
+            "symbol": "dcCore::testVersion",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::version()->compareVersion()",
+            "note": "Method removed, was deprecated: since 2.28, use App::version()->compareVersion() instead"
+        },
+        {
+            "id": "method:dcCore::unsetBlog",
+            "type": "method",
+            "symbol": "dcCore::unsetBlog",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::blog()->loadFromBlog('')",
+            "note": "Method removed, was deprecated: since 2.28, use App::blog()->loadFromBlog('') instead"
+        },
+        {
+            "id": "method:dcCore::updBlog",
+            "type": "method",
+            "symbol": "dcCore::updBlog",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::blogs()->updBlog()",
+            "note": "Method removed, was deprecated: since 2.28, use App::blogs()->updBlog() instead"
+        },
+        {
+            "id": "method:dcCore::updUser",
+            "type": "method",
+            "symbol": "dcCore::updUser",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::users()->updUser()",
+            "note": "Method removed, was deprecated: since 2.28, use App::users()->updUser() instead"
+        },
+        {
+            "id": "method:dcCore::userDefaults",
+            "type": "method",
+            "symbol": "dcCore::userDefaults",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::users()->userDefaults()",
+            "note": "Method removed, was deprecated: since 2.28, use App::users()->userDefaults() instead"
+        },
+        {
+            "id": "method:dcCore::userExists",
+            "type": "method",
+            "symbol": "dcCore::userExists",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::users()->userExists()",
+            "note": "Method removed, was deprecated: since 2.28, use App::users()->userExists() instead"
+        },
+        {
+            "id": "method:dcCore::wikiPostLink",
+            "type": "method",
+            "symbol": "dcCore::wikiPostLink",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::filter()->wikiPostLink()",
+            "note": "Method removed, was deprecated: since 2.28, use App::filter()->wikiPostLink() instead"
+        },
+        {
+            "id": "method:dcCore::wikiTransform",
+            "type": "method",
+            "symbol": "dcCore::wikiTransform",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::filter()->wikiTransform()",
+            "note": "Method removed, was deprecated: since 2.28, use App::filter()->wikiTransform() instead"
+        },
+        {
+            "id": "method:dcUtils::cleanIds",
+            "type": "method",
+            "symbol": "dcUtils::cleanIds",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::blog()->cleanIds()",
+            "note": "Method removed, was deprecated: since 2.28, use App::blog()->cleanIds() instead"
+        },
+        {
+            "id": "method:dcUtils::cssLoad",
+            "type": "method",
+            "symbol": "dcUtils::cssLoad",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::plugins()->cssLoad()",
+            "note": "Method removed, was deprecated: since 2.28, use App::plugins()->cssLoad() instead"
+        },
+        {
+            "id": "method:dcUtils::cssModuleLoad",
+            "type": "method",
+            "symbol": "dcUtils::cssModuleLoad",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "My::cssLoad()",
+            "note": "Method removed, was deprecated: since 2.27, use My::cssLoad() instead"
+        },
+        {
+            "id": "method:dcUtils::getUserCN",
+            "type": "method",
+            "symbol": "dcUtils::getUserCN",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::users()->getUserCN()",
+            "note": "Method removed, was deprecated: since 2.28, use App::users()->getUserCN() instead"
+        },
+        {
+            "id": "method:dcUtils::jsJson",
+            "type": "method",
+            "symbol": "dcUtils::jsJson",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "Html::jsJson()",
+            "note": "Method removed, was deprecated: since 2.28, use Html::jsJson() instead"
+        },
+        {
+            "id": "method:dcUtils::jsLoad",
+            "type": "method",
+            "symbol": "dcUtils::jsLoad",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::plugins()->jsLoad()",
+            "note": "Method removed, was deprecated: since 2.28, use App::plugins()->jsLoad() instead"
+        },
+        {
+            "id": "method:dcUtils::jsModuleLoad",
+            "type": "method",
+            "symbol": "dcUtils::jsModuleLoad",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "My::jsLoad()",
+            "note": "Method removed, was deprecated: since 2.27, use My::jsLoad() instead"
+        },
+        {
+            "id": "method:dcUtils::jsVar",
+            "type": "method",
+            "symbol": "dcUtils::jsVar",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "Html::jsJson() and dotclear.getData()/dotclear.mergeDeep() in javascript",
+            "note": "Method removed, was deprecated: since 2.15, use Html::jsJson() and dotclear.getData()/dotclear.mergeDeep() in javascript instead"
+        },
+        {
+            "id": "method:dcUtils::jsVars",
+            "type": "method",
+            "symbol": "dcUtils::jsVars",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "Html::jsJson() and dotclear.getData()/dotclear.mergeDeep() in javascript",
+            "note": "Method removed, was deprecated: since 2.15, use Html::jsJson() and dotclear.getData()/dotclear.mergeDeep() in javascript instead"
+        },
+        {
+            "id": "method:dcUtils::lexicalArraySort",
+            "type": "method",
+            "symbol": "dcUtils::lexicalArraySort",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App:lexical()->lexicalArraySort()",
+            "note": "Method removed, was deprecated: since 2.28, use App:lexical()->lexicalArraySort() instead"
+        },
+        {
+            "id": "method:dcUtils::lexicalKeySort",
+            "type": "method",
+            "symbol": "dcUtils::lexicalKeySort",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App:lexical()->lexicalKeySort()",
+            "note": "Method removed, was deprecated: since 2.28, use App:lexical()->lexicalKeySort() instead"
+        },
+        {
+            "id": "method:dcUtils::lexicalSort",
+            "type": "method",
+            "symbol": "dcUtils::lexicalSort",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App:lexical()->lexicalSort()",
+            "note": "Method removed, was deprecated: since 2.28, use App:lexical()->lexicalSort() instead"
+        },
+        {
+            "id": "method:dcUtils::path",
+            "type": "method",
+            "symbol": "dcUtils::path",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "Path::reduce()",
+            "note": "Method removed, was deprecated: since 2.28, use Path::reduce() instead"
+        },
+        {
+            "id": "method:dcUtils::removeDiacritics",
+            "type": "method",
+            "symbol": "dcUtils::removeDiacritics",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "Text::removeDiacritics()",
+            "note": "Method removed, was deprecated: since 2.26, use Text::removeDiacritics() instead"
+        },
+        {
+            "id": "method:dcUtils::setLexicalLang",
+            "type": "method",
+            "symbol": "dcUtils::setLexicalLang",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App:lexical()->setLexicalLang()",
+            "note": "Method removed, was deprecated: since 2.28, use App:lexical()->setLexicalLang() instead"
+        },
+        {
+            "id": "method:dcUtils::versionsCompare",
+            "type": "method",
+            "symbol": "dcUtils::versionsCompare",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::plugins()->versionsCompare()",
+            "note": "Method removed, was deprecated: since 2.28, use App::plugins()->versionsCompare() instead"
+        },
+        {
+            "id": "method:form::checkbox",
+            "type": "method",
+            "symbol": "form::checkbox",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Dotclear\\Helper\\Html\\Form\\Checkbox",
+            "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\Checkbox instead",
+            "unique": true
+        },
+        {
+            "id": "method:form::color",
+            "type": "method",
+            "symbol": "form::color",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Dotclear\\Helper\\Html\\Form\\Color",
+            "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\Color instead",
+            "unique": false
+        },
+        {
+            "id": "method:form::combo",
+            "type": "method",
+            "symbol": "form::combo",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Dotclear\\Helper\\Html\\Form\\Select",
+            "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\Select instead",
+            "unique": false
+        },
+        {
+            "id": "method:form::date",
+            "type": "method",
+            "symbol": "form::date",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Dotclear\\Helper\\Html\\Form\\Date",
+            "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\Date instead",
+            "unique": true
+        },
+        {
+            "id": "method:form::datetime",
+            "type": "method",
+            "symbol": "form::datetime",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Dotclear\\Helper\\Html\\Form\\Datetime",
+            "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\Datetime instead",
+            "unique": false
+        },
+        {
+            "id": "method:form::email",
+            "type": "method",
+            "symbol": "form::email",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Dotclear\\Helper\\Html\\Form\\Email",
+            "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\Email instead",
+            "unique": true
+        },
+        {
+            "id": "method:form::field",
+            "type": "method",
+            "symbol": "form::field",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Dotclear\\Helper\\Html\\Form\\Input",
+            "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\Input instead",
+            "unique": false
+        },
+        {
+            "id": "method:form::file",
+            "type": "method",
+            "symbol": "form::file",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Dotclear\\Helper\\Html\\Form\\File",
+            "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\File instead",
+            "unique": true
+        },
+        {
+            "id": "method:form::hidden",
+            "type": "method",
+            "symbol": "form::hidden",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Dotclear\\Helper\\Html\\Form\\Hidden",
+            "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\Hidden instead",
+            "unique": false
+        },
+        {
+            "id": "method:form::number",
+            "type": "method",
+            "symbol": "form::number",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Dotclear\\Helper\\Html\\Form\\Number",
+            "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\Number instead",
+            "unique": true
+        },
+        {
+            "id": "method:form::password",
+            "type": "method",
+            "symbol": "form::password",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Dotclear\\Helper\\Html\\Form\\Password",
+            "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\Password instead",
+            "unique": true
+        },
+        {
+            "id": "method:form::radio",
+            "type": "method",
+            "symbol": "form::radio",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Dotclear\\Helper\\Html\\Form\\Radio",
+            "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\Radio instead",
+            "unique": true
+        },
+        {
+            "id": "method:form::textArea",
+            "type": "method",
+            "symbol": "form::textArea",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Dotclear\\Helper\\Html\\Form\\Textarea",
+            "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\Textarea instead",
+            "unique": true
+        },
+        {
+            "id": "method:form::time",
+            "type": "method",
+            "symbol": "form::time",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Dotclear\\Helper\\Html\\Form\\Time",
+            "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\Time instead",
+            "unique": true
+        },
+        {
+            "id": "method:form::url",
+            "type": "method",
+            "symbol": "form::url",
+            "since": "2.41",
+            "level": "notice",
+            "replace": "Dotclear\\Helper\\Html\\Form\\Url",
+            "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\Url instead",
+            "unique": false
+        },
+        {
+            "id": "property:dcCore::$admin",
+            "type": "property",
+            "symbol": "dcCore::$admin",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::backend()",
+            "note": "Property removed, was deprecated: since 2.28, use App::backend() instead"
+        },
+        {
+            "id": "property:dcCore::$adminurl",
+            "type": "property",
+            "symbol": "dcCore::$adminurl",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::backend()->url()",
+            "note": "Property removed, was deprecated: since 2.28, use App::backend()->url() instead"
+        },
+        {
+            "id": "property:dcCore::$auth",
+            "type": "property",
+            "symbol": "dcCore::$auth",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::auth()",
+            "note": "Property removed, was deprecated: since 2.28, use App::auth() instead"
+        },
+        {
+            "id": "property:dcCore::$autoload",
+            "type": "property",
+            "symbol": "dcCore::$autoload",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "Autoloader::me()",
+            "note": "Property removed, was deprecated: since 2.27, use Autoloader::me() instead"
+        },
+        {
+            "id": "property:dcCore::$blog",
+            "type": "property",
+            "symbol": "dcCore::$blog",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::blog()",
+            "note": "Property removed, was deprecated: since 2.28, use App::blog() instead"
+        },
+        {
+            "id": "property:dcCore::$cache",
+            "type": "property",
+            "symbol": "dcCore::$cache",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "",
+            "note": "Property removed, was deprecated: since 2.28, permanently moved to App::cache()"
+        },
+        {
+            "id": "property:dcCore::$con",
+            "type": "property",
+            "symbol": "dcCore::$con",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::db()->con()",
+            "note": "Property removed, was deprecated: since 2.28, use App::db()->con() instead"
+        },
+        {
+            "id": "property:dcCore::$ctx",
+            "type": "property",
+            "symbol": "dcCore::$ctx",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::frontend()->context()",
+            "note": "Property removed, was deprecated: since 2.28, use App::frontend()->context() instead"
+        },
+        {
+            "id": "property:dcCore::$error",
+            "type": "property",
+            "symbol": "dcCore::$error",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::error()",
+            "note": "Property removed, was deprecated: since 2.28, use App::error() instead"
+        },
+        {
+            "id": "property:dcCore::$favs",
+            "type": "property",
+            "symbol": "dcCore::$favs",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::backend()->favorites()",
+            "note": "Property removed, was deprecated: since 2.28, use App::backend()->favorites() instead"
+        },
+        {
+            "id": "property:dcCore::$lang",
+            "type": "property",
+            "symbol": "dcCore::$lang",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::lang()->getLang() and App::lang()->setLang()",
+            "note": "Property removed, was deprecated: since 2.28, use App::lang()->getLang() and App::lang()->setLang() instead"
+        },
+        {
+            "id": "property:dcCore::$log",
+            "type": "property",
+            "symbol": "dcCore::$log",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::log()",
+            "note": "Property removed, was deprecated: since 2.28, use App::log() instead"
+        },
+        {
+            "id": "property:dcCore::$media",
+            "type": "property",
+            "symbol": "dcCore::$media",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::media()",
+            "note": "Property removed, was deprecated: since 2.28, use App::media() instead"
+        },
+        {
+            "id": "property:dcCore::$menu",
+            "type": "property",
+            "symbol": "dcCore::$menu",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::backend()->menus()",
+            "note": "Property removed, was deprecated: since 2.28, use App::backend()->menus() instead"
+        },
+        {
+            "id": "property:dcCore::$meta",
+            "type": "property",
+            "symbol": "dcCore::$meta",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::meta()",
+            "note": "Property removed, was deprecated: since 2.28, use App::meta() instead"
+        },
+        {
+            "id": "property:dcCore::$notices",
+            "type": "property",
+            "symbol": "dcCore::$notices",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::notice()",
+            "note": "Property removed, was deprecated: since 2.28, use App::notice() instead"
+        },
+        {
+            "id": "property:dcCore::$plugins",
+            "type": "property",
+            "symbol": "dcCore::$plugins",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::plugins()",
+            "note": "Property removed, was deprecated: since 2.28, use App::plugins() instead"
+        },
+        {
+            "id": "property:dcCore::$postmedia",
+            "type": "property",
+            "symbol": "dcCore::$postmedia",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::postMedia()",
+            "note": "Property removed, was deprecated: since 2.28, use App::postMedia() instead"
+        },
+        {
+            "id": "property:dcCore::$prefix",
+            "type": "property",
+            "symbol": "dcCore::$prefix",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::db()->con()->prefix()",
+            "note": "Property removed, was deprecated: since 2.28, use App::db()->con()->prefix() instead"
+        },
+        {
+            "id": "property:dcCore::$public",
+            "type": "property",
+            "symbol": "dcCore::$public",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::frontend()",
+            "note": "Property removed, was deprecated: since 2.28, use App::frontend() instead"
+        },
+        {
+            "id": "property:dcCore::$resources",
+            "type": "property",
+            "symbol": "dcCore::$resources",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::backend()->resources() instance",
+            "note": "Property removed, was deprecated: since 2.28, use App::backend()->resources() instance"
+        },
+        {
+            "id": "property:dcCore::$rest",
+            "type": "property",
+            "symbol": "dcCore::$rest",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::rest()",
+            "note": "Property removed, was deprecated: since 2.28, use App::rest() instead"
+        },
+        {
+            "id": "property:dcCore::$session",
+            "type": "property",
+            "symbol": "dcCore::$session",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::session()",
+            "note": "Property removed, was deprecated: since 2.28, use App::session() instead"
+        },
+        {
+            "id": "property:dcCore::$spamfilters",
+            "type": "property",
+            "symbol": "dcCore::$spamfilters",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "AntispamInitFilters behavior",
+            "note": "Property removed, was deprecated: since 2.28, use AntispamInitFilters behavior instead"
+        },
+        {
+            "id": "property:dcCore::$themes",
+            "type": "property",
+            "symbol": "dcCore::$themes",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::themes()",
+            "note": "Property removed, was deprecated: since 2.28, use App::themes() instead"
+        },
+        {
+            "id": "property:dcCore::$tpl",
+            "type": "property",
+            "symbol": "dcCore::$tpl",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::frontend()->template()",
+            "note": "Property removed, was deprecated: since 2.28, use App::frontend()->template() instead"
+        },
+        {
+            "id": "property:dcCore::$url",
+            "type": "property",
+            "symbol": "dcCore::$url",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::url()",
+            "note": "Property removed, was deprecated: since 2.28, use App::url() instead"
+        },
+        {
+            "id": "property:dcCore::$widgets",
+            "type": "property",
+            "symbol": "dcCore::$widgets",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "Widgets::$widgets",
+            "note": "Property removed, was deprecated: since 2.28, use Widgets::$widgets instead"
+        },
+        {
+            "id": "property:dcCore::$wiki",
+            "type": "property",
+            "symbol": "dcCore::$wiki",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::filter()->wiki()",
+            "note": "Property removed, was deprecated: since 2.27, use App::filter()->wiki() instead"
+        },
+        {
+            "id": "property:dcCore::$wiki2xhtml",
+            "type": "property",
+            "symbol": "dcCore::$wiki2xhtml",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::filter()->wiki()",
+            "note": "Property removed, was deprecated: since 2.27, use App::filter()->wiki() instead"
+        }
+    ]
+}
