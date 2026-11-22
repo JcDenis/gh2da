@@ -1,9 +1,14 @@
 {
     "dotclear": {
+        "from": "2.39.3",
         "stable": "2.40.1",
         "next": "2.41-dev",
         "commit": "21096d880",
-        "php_min": "8.2"
+        "php_min": "8.2",
+        "steps": [
+            "2.39.3 → 2.40.1",
+            "2.40.1 → 2.41-dev"
+        ]
     },
     "rules": [
         {
@@ -198,6 +203,15 @@
             "note": "Deprecated: since 2.27, use App::backend()->menus()::MENU_SYSTEM"
         },
         {
+            "id": "const:Dotclear\\Core\\Upgrade\\Update::ERR_FILES_UNWRITALBE",
+            "type": "const",
+            "symbol": "Dotclear\\Core\\Upgrade\\Update::ERR_FILES_UNWRITALBE",
+            "since": "2.40",
+            "level": "alert",
+            "replace": "",
+            "note": "Constant removed"
+        },
+        {
             "id": "const:Dotclear\\Helper\\Html\\Form\\Dd::DEFAULT_ELEMENT",
             "type": "const",
             "symbol": "Dotclear\\Helper\\Html\\Form\\Dd::DEFAULT_ELEMENT",
@@ -376,6 +390,15 @@
             "level": "notice",
             "replace": "My and a namespaced class to declare module for constants",
             "note": "Deprecated: since 2.28, use My and a namespaced class to declare module for constants instead"
+        },
+        {
+            "id": "const:Dotclear\\Interface\\Module\\ModulesInterface::MODULE_FILE_LOCKED",
+            "type": "const",
+            "symbol": "Dotclear\\Interface\\Module\\ModulesInterface::MODULE_FILE_LOCKED",
+            "since": "2.40",
+            "level": "alert",
+            "replace": "",
+            "note": "Constant removed"
         },
         {
             "id": "const:dcCore::SESSION_TABLE_NAME",
@@ -785,6 +808,24 @@
             "unique": false
         },
         {
+            "id": "method:Dotclear\\Core\\Backend\\Page::open",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Page::open",
+            "since": "2.40",
+            "level": "notice",
+            "replace": "",
+            "note": "Parameters changed, check calls and overrides: (string $title = '', string $head = '', string $breadcrumb = '', array $options = []) → (string $title = '', string $head = '', string $breadcrumb = '', array $options = [], int $notices = 0)"
+        },
+        {
+            "id": "method:Dotclear\\Core\\Backend\\Page::openPopup",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Backend\\Page::openPopup",
+            "since": "2.40",
+            "level": "notice",
+            "replace": "",
+            "note": "Parameters changed, check calls and overrides: (string $title = '', string $head = '', string $breadcrumb = '') → (string $title = '', string $head = '', string $breadcrumb = '', int $notices = 0)"
+        },
+        {
             "id": "method:Dotclear\\Core\\Backend\\Page::success",
             "type": "method",
             "symbol": "Dotclear\\Core\\Backend\\Page::success",
@@ -853,6 +894,35 @@
             "replace": "Ctx::global_filters",
             "note": "Deprecated: since version 2.11 , use Ctx::global_filters instead",
             "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Core\\Frontend\\Tpl::BlogParentThemeURL",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Frontend\\Tpl::BlogParentThemeURL",
+            "since": "2.40",
+            "level": "notice",
+            "replace": "BlogThemeURL()",
+            "note": "Deprecated: since 2.35 Use BlogThemeURL() instead as it will now look for custom > theme > parent theme > template set",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Frontend\\Tpl::BlogRSDURL",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Frontend\\Tpl::BlogRSDURL",
+            "since": "2.40",
+            "level": "notice",
+            "replace": "another format",
+            "note": "Deprecated: since 2.24, use another format instead !",
+            "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Core\\Frontend\\Tpl::getSortByStr",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Frontend\\Tpl::getSortByStr",
+            "since": "2.40",
+            "level": "notice",
+            "replace": "",
+            "note": "Parameters changed, check calls and overrides: (ArrayObject $attr, ?string $table = null) → (ArrayObject $attr, string $table = '')"
         },
         {
             "id": "method:Dotclear\\Core\\Frontend\\TplBlogTrait::BlogParentThemeURL",
@@ -945,6 +1015,24 @@
             "unique": false
         },
         {
+            "id": "method:Dotclear\\Core\\Upgrade\\Page::open",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Upgrade\\Page::open",
+            "since": "2.40",
+            "level": "notice",
+            "replace": "",
+            "note": "Parameters changed, check calls and overrides: (string $title = '', string $head = '', string $breadcrumb = '', array $options = []) → (string $title = '', string $head = '', string $breadcrumb = '', array $options = [], int $notices = 0)"
+        },
+        {
+            "id": "method:Dotclear\\Core\\Upgrade\\Update::parseLine",
+            "type": "method",
+            "symbol": "Dotclear\\Core\\Upgrade\\Update::parseLine",
+            "since": "2.40",
+            "level": "notice",
+            "replace": "",
+            "note": "Parameters changed, check calls and overrides: (&$v, $k, $n) → (&$v, $k, int $n)"
+        },
+        {
             "id": "method:Dotclear\\Database\\Cursor::__get",
             "type": "method",
             "symbol": "Dotclear\\Database\\Cursor::__get",
@@ -1013,6 +1101,15 @@
             "replace": "",
             "note": "Deprecated: Since 2.26",
             "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Helper\\Date::addTimeZone",
+            "type": "method",
+            "symbol": "Dotclear\\Helper\\Date::addTimeZone",
+            "since": "2.40",
+            "level": "notice",
+            "replace": "",
+            "note": "Parameters changed, check calls and overrides: (string $timezone, $timestamp = false) → (string $timezone, int|false $timestamp = false)"
         },
         {
             "id": "method:Dotclear\\Helper\\File\\Manager::setExcludePattern",
@@ -1103,6 +1200,73 @@
             "replace": "",
             "note": "Deprecated: since 2.41",
             "unique": true
+        },
+        {
+            "id": "method:Dotclear\\Helper\\Html\\Form\\Input::__construct",
+            "type": "method",
+            "symbol": "Dotclear\\Helper\\Html\\Form\\Input::__construct",
+            "since": "2.40",
+            "level": "notice",
+            "replace": "",
+            "note": "Parameters changed, check calls and overrides: (string|array|null $id = null, string $type = 'text', private readonly bool $renderLabel = true) → (string|array|null $id = null, string $type = 'text', protected readonly bool $renderLabel = true)"
+        },
+        {
+            "id": "method:Dotclear\\Helper\\Html\\Form\\Option::__construct",
+            "type": "method",
+            "symbol": "Dotclear\\Helper\\Html\\Form\\Option::__construct",
+            "since": "2.40",
+            "level": "notice",
+            "replace": "",
+            "note": "Parameters changed, check calls and overrides: (string $text, string $value, ?string $element = null) → (?string $text, string|int $value, ?string $element = null)"
+        },
+        {
+            "id": "method:Dotclear\\Helper\\Html\\Template\\Template::__construct",
+            "type": "method",
+            "symbol": "Dotclear\\Helper\\Html\\Template\\Template::__construct",
+            "since": "2.40",
+            "level": "notice",
+            "replace": "",
+            "note": "Parameters changed, check calls and overrides: (string $cache_dir, private readonly string $self_name) → (string $cache_dir, private readonly string $self_name, private readonly bool $debug_mode = false)"
+        },
+        {
+            "id": "method:Dotclear\\Helper\\Html\\XmlTag::name",
+            "type": "method",
+            "symbol": "Dotclear\\Helper\\Html\\XmlTag::name",
+            "since": "2.40",
+            "level": "alert",
+            "replace": "getName()",
+            "note": "Magic method renamed (conflict with __set())",
+            "manual": true
+        },
+        {
+            "id": "method:Dotclear\\Helper\\Html\\XmlTag::node",
+            "type": "method",
+            "symbol": "Dotclear\\Helper\\Html\\XmlTag::node",
+            "since": "2.40",
+            "level": "alert",
+            "replace": "getNode(int $index)",
+            "note": "Magic method renamed (conflict with __set())",
+            "manual": true
+        },
+        {
+            "id": "method:Dotclear\\Helper\\Html\\XmlTag::nodes",
+            "type": "method",
+            "symbol": "Dotclear\\Helper\\Html\\XmlTag::nodes",
+            "since": "2.40",
+            "level": "alert",
+            "replace": "getNodes()",
+            "note": "Magic method renamed (conflict with __set())",
+            "unique": true,
+            "manual": true
+        },
+        {
+            "id": "method:Dotclear\\Helper\\Network\\XmlRpc\\Request::__construct",
+            "type": "method",
+            "symbol": "Dotclear\\Helper\\Network\\XmlRpc\\Request::__construct",
+            "since": "2.40",
+            "level": "notice",
+            "replace": "",
+            "note": "Parameters changed, check calls and overrides: (public string $method, public array $args) → (protected string $method, protected array $args)"
         },
         {
             "id": "method:Dotclear\\Helper\\WebAuthn\\Attestation\\Format\\Tpm::__construct",
@@ -1375,6 +1539,16 @@
             "unique": false
         },
         {
+            "id": "method:Dotclear\\Module\\ModuleDefine::updLocked",
+            "type": "method",
+            "symbol": "Dotclear\\Module\\ModuleDefine::updLocked",
+            "since": "2.40",
+            "level": "alert",
+            "replace": "",
+            "note": "Method removed",
+            "unique": true
+        },
+        {
             "id": "method:Dotclear\\Module\\Modules::getAnyModules",
             "type": "method",
             "symbol": "Dotclear\\Module\\Modules::getAnyModules",
@@ -1473,6 +1647,62 @@
             "replace": "self::getDefines()",
             "note": "Deprecated: since 2.26, use self::getDefines() instead",
             "unique": false
+        },
+        {
+            "id": "method:Dotclear\\Plugin\\dcLegacyEditor\\BackendBehaviors::adminPopupLink",
+            "type": "method",
+            "symbol": "Dotclear\\Plugin\\dcLegacyEditor\\BackendBehaviors::adminPopupLink",
+            "since": "2.40",
+            "level": "notice",
+            "replace": "",
+            "note": "Parameters changed, check calls and overrides: ($editor = '') → (string $editor = '')"
+        },
+        {
+            "id": "method:Dotclear\\Plugin\\dcLegacyEditor\\BackendBehaviors::adminPopupMedia",
+            "type": "method",
+            "symbol": "Dotclear\\Plugin\\dcLegacyEditor\\BackendBehaviors::adminPopupMedia",
+            "since": "2.40",
+            "level": "notice",
+            "replace": "",
+            "note": "Parameters changed, check calls and overrides: ($editor = '') → (string $editor = '')"
+        },
+        {
+            "id": "method:Dotclear\\Plugin\\dcLegacyEditor\\BackendBehaviors::adminPopupPosts",
+            "type": "method",
+            "symbol": "Dotclear\\Plugin\\dcLegacyEditor\\BackendBehaviors::adminPopupPosts",
+            "since": "2.40",
+            "level": "notice",
+            "replace": "",
+            "note": "Parameters changed, check calls and overrides: ($editor = '') → (string $editor = '')"
+        },
+        {
+            "id": "method:Dotclear\\Plugin\\dcLegacyEditor\\BackendBehaviors::adminPostEditor",
+            "type": "method",
+            "symbol": "Dotclear\\Plugin\\dcLegacyEditor\\BackendBehaviors::adminPostEditor",
+            "since": "2.40",
+            "level": "notice",
+            "replace": "",
+            "note": "Parameters changed, check calls and overrides: ($editor = '', $context = '', array $tags = [], $syntax = '') → (string $editor = '', string $context = '', array $tags = [], string $syntax = '')"
+        },
+        {
+            "id": "method:Dotclear\\Plugin\\widgets\\WidgetsElement::checkHomeOnly",
+            "type": "method",
+            "symbol": "Dotclear\\Plugin\\widgets\\WidgetsElement::checkHomeOnly",
+            "since": "2.40",
+            "level": "notice",
+            "replace": "",
+            "note": "2nd and 3rd arguments removed: check calls and overrides",
+            "manual": true
+        },
+        {
+            "id": "method:Dotclear\\Plugin\\widgets\\WidgetsElement::setting",
+            "type": "method",
+            "symbol": "Dotclear\\Plugin\\widgets\\WidgetsElement::setting",
+            "since": "2.40",
+            "level": "notice",
+            "replace": "",
+            "note": "Options (radio, combo) are now the 5th argument, the old trailing 6th argument (opts) is removed: check calls with options",
+            "manual": true
         },
         {
             "id": "method:Dotclear\\Process\\Backend\\Home::process",
@@ -2447,6 +2677,52 @@
             "replace": "Dotclear\\Helper\\Html\\Form\\Url",
             "note": "Deprecated: Since 2.26, use Dotclear\\Helper\\Html\\Form\\Url instead",
             "unique": false
+        },
+        {
+            "id": "property:Dotclear\\Core\\Frontend\\Ctx::$stack",
+            "type": "property",
+            "symbol": "Dotclear\\Core\\Frontend\\Ctx::$stack",
+            "since": "2.40",
+            "level": "alert",
+            "replace": "",
+            "note": "Property no longer public"
+        },
+        {
+            "id": "property:Dotclear\\Core\\Frontend\\Utility::$search_count",
+            "type": "property",
+            "symbol": "Dotclear\\Core\\Frontend\\Utility::$search_count",
+            "since": "2.40",
+            "level": "notice",
+            "replace": "",
+            "note": "App::frontend()->search_count is now an int",
+            "manual": true
+        },
+        {
+            "id": "property:Dotclear\\Helper\\Network\\XmlRpc\\Request::$args",
+            "type": "property",
+            "symbol": "Dotclear\\Helper\\Network\\XmlRpc\\Request::$args",
+            "since": "2.40",
+            "level": "alert",
+            "replace": "",
+            "note": "Property no longer public"
+        },
+        {
+            "id": "property:Dotclear\\Helper\\Network\\XmlRpc\\Request::$method",
+            "type": "property",
+            "symbol": "Dotclear\\Helper\\Network\\XmlRpc\\Request::$method",
+            "since": "2.40",
+            "level": "alert",
+            "replace": "",
+            "note": "Property no longer public"
+        },
+        {
+            "id": "property:Dotclear\\Helper\\Network\\XmlRpc\\Request::$xml",
+            "type": "property",
+            "symbol": "Dotclear\\Helper\\Network\\XmlRpc\\Request::$xml",
+            "since": "2.40",
+            "level": "alert",
+            "replace": "",
+            "note": "Property no longer public"
         },
         {
             "id": "property:dcCore::$admin",

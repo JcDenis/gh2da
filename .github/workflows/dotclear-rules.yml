@@ -1,7 +1,7 @@
 # Update the compatibility rules of the next Dotclear version (dotclear/rules.json)
 #
-# Compares the last stable tag of Dotclear with its master branch (GitHub mirror of the official repository)
-# with scripts/dotclear-rules.php, adds the manual rules of dotclear/rules-manual.json, and commits
+# Compares, from FROM_VERSION, the last tag of each branch of Dotclear with the next one, then the last one with master
+# (GitHub mirror of the official repository) with scripts/dotclear-rules.php, adds the manual rules of dotclear/rules-manual.json, and commits
 # dotclear/rules.json on master when the rules change. A change of the master commit alone is not committed.
 # Also runs the test of the scanner (tests/scanner/test.php). See dotclear/RULES.md.
 
@@ -23,6 +23,10 @@ on:
 
 permissions:
   contents: write
+
+env:
+  # First Dotclear version of the rules: oldest version supported by DotclearWatch
+  FROM_VERSION: '2.39'
 
 concurrency:
   group: dotclear-rules
@@ -49,22 +53,29 @@ jobs:
         shell: bash
         run: |
           git clone -q --filter=blob:none --no-checkout https://github.com/dotclear/dotclear.git "$RUNNER_TEMP/dc"
-          # last stable tag: x.y or x.y.z, without suffix
-          stable=$(git -C "$RUNNER_TEMP/dc" tag --sort=-v:refname | grep -E '^[0-9]+\.[0-9]+(\.[0-9]+)?$' | head -1)
-          if [[ -z "$stable" ]]; then
-            echo "::error::No stable tag found"
+          # last tag (x.y or x.y.z, without suffix) of each branch from $FROM_VERSION, then master
+          tags=$(git -C "$RUNNER_TEMP/dc" tag | grep -E '^[0-9]+\.[0-9]+(\.[0-9]+)?$' | sort -V \
+            | awk -v from="$FROM_VERSION" 'BEGIN { split(from, f, ".") } { split($0, v, "."); if (v[1] > f[1] || (v[1] == f[1] && v[2] >= f[2])) last[v[1] "." v[2]] = $0 } END { for (k in last) print last[k] }' | sort -V)
+          if [[ -z "$tags" ]]; then
+            echo "::error::No stable tag found from $FROM_VERSION"
             exit 1
           fi
-          git -C "$RUNNER_TEMP/dc" worktree add -q "$RUNNER_TEMP/stable" "$stable"
+          trees=()
+          for tag in $tags; do
+            git -C "$RUNNER_TEMP/dc" worktree add -q "$RUNNER_TEMP/$tag" "$tag"
+            trees+=("$RUNNER_TEMP/$tag")
+          done
           git -C "$RUNNER_TEMP/dc" worktree add -q --detach "$RUNNER_TEMP/next" origin/master
-          echo "stable=$stable" >> "$GITHUB_OUTPUT"
+          trees+=("$RUNNER_TEMP/next")
+          echo "trees=${trees[*]}" >> "$GITHUB_OUTPUT"
+          echo "tags=$(echo $tags | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
           echo "commit=$(git -C "$RUNNER_TEMP/next" rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Build rules
         id: build
         shell: bash
         run: |
-          php scripts/dotclear-rules.php "$RUNNER_TEMP/stable" "$RUNNER_TEMP/next" dotclear/rules-manual.json > "$RUNNER_TEMP/rules.json"
+          php scripts/dotclear-rules.php ${{ steps.dotclear.outputs.trees }} dotclear/rules-manual.json > "$RUNNER_TEMP/rules.json"
           # compare without the master commit
           strip='$j = json_decode(file_get_contents($argv[1]), true); unset($j["dotclear"]["commit"]); echo json_encode($j);'
           if [[ -f dotclear/rules.json ]] && [[ "$(php -r "$strip" dotclear/rules.json)" == "$(php -r "$strip" "$RUNNER_TEMP/rules.json")" ]]; then
@@ -83,5 +94,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add dotclear/rules.json
-          git commit -q -m "[ci] Update Dotclear rules (${{ steps.dotclear.outputs.stable }} to master ${{ steps.dotclear.outputs.commit }})"
+          git commit -q -m "[ci] Update Dotclear rules (${{ steps.dotclear.outputs.tags }}and master ${{ steps.dotclear.outputs.commit }})"
           git push -q origin HEAD:master
