@@ -28,6 +28,8 @@ Documentation structure design
 DotclearWatch referencement
 emailNotification echange
 emailOptionnel echange
+emptyPlugin -
+emptyTheme -
 enhancePostContent contenu edition
 entryPhotoExifWidget contenu edition
 eventHandler contenu edition
