@@ -55,7 +55,7 @@ jobs:
     if: ${{ !inputs.skip_checks }}
     runs-on: ubuntu-latest
     outputs:
-      deps: ${{ steps.define.outputs.deps }}
+      deps: ${{ steps.deps.outputs.deps || steps.define.outputs.deps }}
       type: ${{ steps.define.outputs.type }}
       dcref: ${{ steps.dcdeps.outputs.ref || steps.dotclear.outputs.ref }}
       disabled: ${{ steps.define.outputs.disabled }}
@@ -142,12 +142,52 @@ jobs:
           git clone -q --depth 1 --branch "$ref" https://github.com/dotclear/dotclear.git dotclear
 
       - name: Get dependencies
+        id: deps
         shell: bash
         env:
           DEPS: ${{ steps.define.outputs.deps }}
+          MODULE_ID: ${{ github.event.repository.name }}
         run: |
+          # Modules required by a _define.php (requires, without core and php)
+          requires() {
+            php -r '
+              $define = (string) @file_get_contents($argv[1]);
+              if (!preg_match("/[\x27\"]requires[\x27\"]\s*=>\s*\[/", $define, $m, PREG_OFFSET_CAPTURE)) {
+                exit;
+              }
+              $start = $m[0][1] + strlen($m[0][0]);
+              $depth = 1;
+              for ($i = $start; $i < strlen($define) && $depth > 0; $i++) {
+                $depth += $define[$i] === "[" ? 1 : ($define[$i] === "]" ? -1 : 0);
+              }
+              $requires = preg_replace("#//[^\n]*#", "", substr($define, $start, $i - $start - 1));
+              preg_match_all("/\[\s*[\x27\"]([A-Za-z0-9_]+)[\x27\"]/", (string) $requires, $reqs);
+              echo implode(" ", array_diff($reqs[1], ["core", "php"]));
+            ' "$1"
+          }
+          # Git submodules of a dependency (ex: libraries of legacyMarkdown),
+          # default branch of the submodule when its commit is not available
+          submodules() {
+            [[ -f "$1/.gitmodules" ]] || return 0
+            git -C "$1" submodule update -q --init --depth 1 2> /dev/null && return 0
+            git -C "$1" config -f .gitmodules --get-regexp '^submodule\..*\.path$' | while read -r key path; do
+              url=$(git -C "$1" config -f .gitmodules --get "${key%.path}.url")
+              if [[ -z "$(ls -A "$1/$path" 2> /dev/null | grep -vx .git)" ]]; then
+                rm -rf "${1:?}/$path"
+                git clone -q --depth 1 "$url" "$1/$path" && echo "::warning::Submodule $path of $1 from default branch of $url"
+              fi
+            done
+          }
           mkdir -p deps
-          for dep in $DEPS; do
+          queue=($DEPS)
+          seen=" $MODULE_ID "
+          all=()
+          while [[ ${#queue[@]} -gt 0 ]]; do
+            dep=${queue[0]}
+            queue=("${queue[@]:1}")
+            [[ "$seen" == *" $dep "* ]] && continue
+            seen="$seen$dep "
+            all+=("$dep")
             if [[ -d "dotclear/plugins/$dep" || -d "dotclear/themes/$dep" ]]; then
               continue
             fi
@@ -157,8 +197,16 @@ jobs:
                 break
               fi
             done
-            [[ -d "deps/$dep" ]] || echo "::warning::Dependency $dep not found"
+            if [[ -d "deps/$dep" ]]; then
+              submodules "deps/$dep"
+              # Dependencies of the dependency (ex: TemplateHelper for legacyMarkdown)
+              queue+=($(requires "deps/$dep/_define.php"))
+            else
+              echo "::warning::Dependency $dep not found"
+            fi
           done
+          echo "deps=${all[*]}" >> $GITHUB_OUTPUT
+          echo "All dependencies: ${all[*]}"
 
       - name: Use Dotclear version required by dependencies
         id: dcdeps
@@ -330,6 +378,18 @@ jobs:
         env:
           DEPS: ${{ needs.check.outputs.deps }}
         run: |
+          # Git submodules of a dependency (same as job check)
+          submodules() {
+            [[ -f "$1/.gitmodules" ]] || return 0
+            git -C "$1" submodule update -q --init --depth 1 2> /dev/null && return 0
+            git -C "$1" config -f .gitmodules --get-regexp '^submodule\..*\.path$' | while read -r key path; do
+              url=$(git -C "$1" config -f .gitmodules --get "${key%.path}.url")
+              if [[ -z "$(ls -A "$1/$path" 2> /dev/null | grep -vx .git)" ]]; then
+                rm -rf "${1:?}/$path"
+                git clone -q --depth 1 "$url" "$1/$path"
+              fi
+            done
+          }
           copy() {
             local dir=plugins
             grep -qE "['\"]type['\"]\s*=>\s*['\"]theme['\"]" "$1/_define.php" 2> /dev/null && dir=themes
@@ -340,7 +400,8 @@ jobs:
             docker exec dotclear test -d "/var/www/dotclear/app/plugins/$dep" -o -d "/var/www/dotclear/app/themes/$dep" && continue
             for owner in ${{ github.repository_owner }} franck-paul; do
               if git clone -q --depth 1 "https://github.com/$owner/$dep.git" "deps/$dep" 2> /dev/null; then
-                rm -rf "deps/$dep/.git"
+                submodules "deps/$dep"
+                find "deps/$dep" -name .git -prune -exec rm -rf {} +
                 copy "deps/$dep" "$dep"
                 echo "Dependency $dep from $owner"
                 break

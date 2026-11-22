@@ -75,7 +75,8 @@ Reusable workflow `.github/workflows/dotclear-module.yml` does for each Dotclear
 
 * **checks** on push, pull request and weekly (monday) : PHP lint and PHPStan (level max with deprecation rules)
   against the latest release of the Dotclear version required in `_define.php` (Dotclear master if not yet released).
-  Required plugins and plugins used in code are taken from same owner repositories, then from franck-paul ones.
+  Required plugins and plugins used in code are taken from same owner repositories, then from franck-paul ones,
+  with the plugins they require themselves and their git submodules (default branch of a submodule whose commit is gone).
 * **tests** after checks : a Dotclear site is started with the [docker-dotclear](https://github.com/JcDenis/docker-dotclear) image
   (`latest`, or `dev` when the module or one of its dependencies needs a not yet released Dotclear), the module and its dependencies are installed,
   then admin pages (dashboard, settings, posts, media, widgets, module page and configuration...) and public pages

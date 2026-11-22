@@ -124,17 +124,22 @@ $id     = $options['id'] ?? (preg_match('#([A-Za-z0-9_]+?)(\.git)?/?$#', $origin
 $define   = (string) file_get_contents($module . '/_define.php');
 $dcmin    = '';
 $deps     = [];
-$requires = '';
-if (preg_match('/[\'"]requires[\'"]\s*=>\s*\[/', $define, $m, PREG_OFFSET_CAPTURE)) {
-    $start = $m[0][1] + strlen($m[0][0]);
-    $depth = 1;
-    for ($i = $start; $i < strlen($define) && $depth > 0; $i++) {
-        $depth += $define[$i] === '[' ? 1 : ($define[$i] === ']' ? -1 : 0);
+// Requires array of a _define.php: [[module, version], ...] (balanced brackets, may be multiline with comments)
+$requires = function (string $define): array {
+    $requires = '';
+    if (preg_match('/[\'"]requires[\'"]\s*=>\s*\[/', $define, $m, PREG_OFFSET_CAPTURE)) {
+        $start = $m[0][1] + strlen($m[0][0]);
+        $depth = 1;
+        for ($i = $start; $i < strlen($define) && $depth > 0; $i++) {
+            $depth += $define[$i] === '[' ? 1 : ($define[$i] === ']' ? -1 : 0);
+        }
+        $requires = preg_replace('#//[^\n]*#', '', substr($define, $start, $i - $start - 1));
     }
-    $requires = preg_replace('#//[^\n]*#', '', substr($define, $start, $i - $start - 1));
-}
-preg_match_all('/\[\s*[\'"]([A-Za-z0-9_]+)[\'"]\s*(?:,\s*[\'"]([0-9.]+)[\'"])?\s*\]/', (string) $requires, $reqs, PREG_SET_ORDER);
-foreach ($reqs as $req) {
+    preg_match_all('/\[\s*[\'"]([A-Za-z0-9_]+)[\'"]\s*(?:,\s*[\'"]([0-9.]+)[\'"])?\s*\]/', (string) $requires, $reqs, PREG_SET_ORDER);
+
+    return $reqs;
+};
+foreach ($requires($define) as $req) {
     if ($req[1] === 'core') {
         $dcmin = $req[2] ?? '';
     } elseif ($req[1] !== 'php') {
@@ -203,7 +208,31 @@ $dotclear = function (string $ref) use ($cache, $update, $run, $fail, $git): str
 // Dependencies: from Dotclear, else JcDenis or franck-paul repositories
 $distributed = $dotclear($release($dcmin));
 $depdirs     = [];
-foreach ($deps as $dep) {
+// Git submodules of a dependency (ex: libraries of legacyMarkdown),
+// default branch of the submodule when its commit is not available
+$submodules = function (string $dir) use ($git, $run, $rmdir): void {
+    if (!is_file($dir . '/.gitmodules')) {
+        return;
+    }
+    if ($run('git -C ' . escapeshellarg($dir) . ' submodule update -q --init --depth 1 2>/dev/null', [], true) === 0) {
+        return;
+    }
+    $paths = (string) shell_exec('git -C ' . escapeshellarg($dir) . " config -f .gitmodules --get-regexp '^submodule\\..*\\.path\$'");
+    foreach (array_filter(explode("\n", $paths)) as $line) {
+        [$key, $path] = explode(' ', trim($line), 2);
+        $url          = trim((string) shell_exec('git -C ' . escapeshellarg($dir) . ' config -f .gitmodules --get ' . escapeshellarg(substr($key, 0, -5) . '.url')));
+        $files        = array_diff(scandir($dir . '/' . $path) ?: [], ['.', '..', '.git']);
+        if ($files === [] && $url !== '') {
+            $rmdir($dir . '/' . $path);
+            if ($run($git . ' clone -q --depth 1 ' . escapeshellarg($url) . ' ' . escapeshellarg($dir . '/' . $path)) === 0) {
+                echo "WARNING: submodule $path of " . basename($dir) . " from default branch of $url\n";
+            }
+        }
+    }
+};
+// Dependencies of dependencies are added to the list (ex: TemplateHelper for legacyMarkdown)
+for ($d = 0; $d < count($deps); $d++) {
+    $dep = $deps[$d];
     if (is_dir($distributed . '/plugins/' . $dep) || is_dir($distributed . '/themes/' . $dep)) {
         continue;
     }
@@ -225,7 +254,14 @@ foreach ($deps as $dep) {
         $run('git -C ' . escapeshellarg($dir) . ' pull -q --ff-only', [], true);
     }
     if (is_dir($dir)) {
+        $submodules($dir);
         $depdirs[$dep] = $dir;
+        foreach ($requires((string) @file_get_contents($dir . '/_define.php')) as $req) {
+            if (!in_array($req[1], ['core', 'php'], true) && strcasecmp($req[1], $id) !== 0 && !in_array($req[1], $deps, true)) {
+                echo "Dependency {$req[1]} required by $dep\n";
+                $deps[] = $req[1];
+            }
+        }
     }
 }
 
