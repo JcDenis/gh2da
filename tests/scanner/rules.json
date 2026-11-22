@@ -120,6 +120,26 @@
             "replace": "",
             "note": "Test rule",
             "unique": true
+        },
+        {
+            "id": "php:global $_ctx",
+            "type": "php",
+            "symbol": "global $_ctx",
+            "since": "2.45",
+            "level": "alert",
+            "replace": "App::frontend()->context()",
+            "note": "Test rule: forecast for 2.45",
+            "pattern": "global\\s+\\$_ctx\\W"
+        },
+        {
+            "id": "php:$GLOBALS['_ctx']",
+            "type": "php",
+            "symbol": "$GLOBALS['_ctx']",
+            "since": "2.41",
+            "level": "alert",
+            "replace": "App::frontend()->context()",
+            "note": "Test rule",
+            "pattern": "\\$GLOBALS\\['_ctx'\\]"
         }
     ]
 }
