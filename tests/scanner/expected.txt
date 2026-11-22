@@ -1,4 +1,5 @@
 js/admin.js:2 notice sure js js:toggleWithLegend
+js/module.mjs:1 notice sure js js:toggleWithLegend
 src/Backend.php:6 alert sure import class:dcCore
 src/Backend.php:15 alert sure static class:dcCore
 src/Backend.php:16 alert sure static const:Dotclear\Helper\Html\Form\Dd::DEFAULT_ELEMENT
@@ -7,6 +8,9 @@ src/Backend.php:19 notice sure behavior behavior:adminPageNotification
 src/Backend.php:22 notice sure call method:Dotclear\Core\Backend\Favorite::largeIcon
 src/Backend.php:29 notice sure override method:Dotclear\Core\Backend\Favorite::largeIcon
 src/Backend.php:31 notice sure static method:Dotclear\Core\Backend\Favorite::largeIcon
+src/Globals.php:10 notice sure pattern php:global $_ctx forecast 2.45
+src/Globals.php:11 alert sure pattern php:$GLOBALS['_ctx']
+src/Globals.php:13 notice sure pattern php:global $_ctx forecast 2.45
 src/Guarded.php:9 notice sure static class:dcCore guarded
 src/Other.php:4 alert sure import function:Dotclear\Helper\oldFunction
 src/Other.php:11 alert probable call method:Dotclear\Test\Old::veryOldMethod

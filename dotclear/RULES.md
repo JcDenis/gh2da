@@ -45,14 +45,14 @@ Rule fields:
 | Field | Content |
 |---|---|
 | `id` | Unique and stable: `<type>:<symbol>`. Used to replace or disable a rule by hand. |
-| `type` | `class` (also interface, trait, enum), `method`, `property`, `const`, `function`, `behavior`, `js`. |
-| `symbol` | Fully qualified name, without leading `\`: `Dotclear\Core\Backend\Page`, `Class::method`, `Class::$property`, `Class::CONST`, behavior name, JS name. |
-| `since` | Version (major.minor) where the change happens (`2.40`, `2.41` for master): the rule matters to a blog running an older version. |
+| `type` | `class` (also interface, trait, enum), `method`, `property`, `const`, `function`, `behavior`, `js` and `php` (search of a `pattern`). |
+| `symbol` | Fully qualified name, without leading `\`: `Dotclear\Core\Backend\Page`, `Class::method`, `Class::$property`, `Class::CONST`, behavior name; a short label for `js` and `php` rules (ex: `global $_ctx`). |
+| `since` | Version (major.minor) where the change happens (`2.40`, `2.41` for master): the rule matters to a blog running an older version. A version later than the next one makes a forecast (ex: `2.45` while master is 2.41): counted as a notice until it becomes the next version. |
 | `level` | `alert`: breaks with the next version. `notice`: deprecated or changed, breaks later or in some cases. |
 | `replace` | What to use instead, when known (short text, may be empty). |
 | `note` | Short explanation, in English. |
 | `unique` | (methods) `true` when no class of the next version has a method with this name and the method is not static: a call found by its name alone (`->name(`) is then probably this one. Otherwise, only calls with a known class count (`Class::name(`, `parent::name(` in a subclass). |
-| `pattern` | (manual `js` rules) PCRE pattern, without delimiters, to search in JavaScript files. |
+| `pattern` | (`js` and `php` rules) PCRE pattern, without delimiters, searched with the `m` modifier: in `.js` and `.mjs` files for `js`, in PHP files without their comments for `php` (strings are kept, ex: `\$GLOBALS\['_ctx'\]`). |
 | `manual` | `true` when the rule comes from, or was changed by, `rules-manual.json`. |
 
 ## What is generated
@@ -113,8 +113,9 @@ $report  = $scanner->scan('/path/to/module');                      // level (ale
 $php     = $scanner->checkPhp(PHP_VERSION);                         // finding or null
 ```
 
-Each finding gives the file, line, rule (`id`, `type`, `symbol`, `replace`, `note`), its `level`, `match` (`sure` or `probable`),
-`context` (import, extends, implements, use, new, static, call, override, property, string, behavior, js) and `guarded`.
+Each finding gives the file, line, rule (`id`, `type`, `symbol`, `replace`, `note`, `since`), its `level`, `match` (`sure` or `probable`),
+`context` (import, extends, implements, use, new, static, call, override, property, string, behavior, js, pattern), `guarded`
+and `forecast` (rule of a version later than the next one: level lowered to notice).
 
 From the command line, for one or more modules:
 
@@ -143,7 +144,8 @@ How it reads the code:
 * `method`, `const`, `property`: `Class::name` on the class or a subclass; by name alone only when `unique` is `true`.
 * `function`: call of the function (namespaced or global).
 * `behavior`: string given to `addBehavior()` / `addBehaviors()`.
-* `js`: `pattern` in `.js` files.
+* `js`: `pattern` in `.js` and `.mjs` files; `php`: `pattern` in PHP files, comments removed (lines kept).
+* A rule whose `since` is later than the next version (`next` of the header) is a forecast: report it as a notice.
 * A module that already handles both versions (`class_exists()`, `method_exists()`, `version_compare()` on the Dotclear version)
   should see its alerts lowered to notices in the file concerned.
 

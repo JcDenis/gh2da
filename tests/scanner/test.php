@@ -15,7 +15,7 @@ $scanner = DotclearRulesScanner::fromFile(__DIR__ . '/rules.json', '2.40.1');
 $report  = $scanner->scan(__DIR__ . '/module');
 $lines   = [];
 foreach ($report['findings'] as $f) {
-    $lines[] = sprintf('%s:%d %s %s %s %s%s', $f['file'], $f['line'], $f['level'], $f['match'], $f['context'], $f['id'], $f['guarded'] ? ' guarded' : '');
+    $lines[] = sprintf('%s:%d %s %s %s %s%s%s', $f['file'], $f['line'], $f['level'], $f['match'], $f['context'], $f['id'], $f['guarded'] ? ' guarded' : '', $f['forecast'] ? ' forecast ' . $f['since'] : '');
 }
 $lines[] = 'php 8.1.0: ' . ($scanner->checkPhp('8.1.0') === null ? 'ok' : 'alert');
 $lines[] = 'php 8.4.0: ' . ($scanner->checkPhp('8.4.0') === null ? 'ok' : 'alert');

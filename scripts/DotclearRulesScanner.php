@@ -15,14 +15,15 @@
  *     $report  = $scanner->scan('/path/to/module');
  *
  * Each finding: file, line, id, type, symbol, level (alert, notice), rule_level (level of the rule), replace, note,
- * match (sure, probable), context (import, extends, implements, use, new, static, call, override, property, string, behavior, js),
- * guarded (true when the file already checks for the element or the Dotclear version: alerts are lowered to notices).
+ * match (sure, probable), context (import, extends, implements, use, new, static, call, override, property, string, behavior, js, pattern),
+ * guarded (true when the file already checks for the element or the Dotclear version: alerts are lowered to notices),
+ * since (version of the rule), forecast (true for a rule of a version later than the next one: counted as a notice).
  */
 declare(strict_types=1);
 
 /**
- * @phpstan-type Rule array{id: string, type: string, symbol: string, since: string, level: string, replace: string, note: string, pattern: string, unique: bool}
- * @phpstan-type Finding array{file: string, line: int, id: string, type: string, symbol: string, level: string, rule_level: string, replace: string, note: string, match: string, context: string, guarded: bool}
+ * @phpstan-type Rule array{id: string, type: string, symbol: string, since: string, level: string, replace: string, note: string, pattern: string, unique: bool, forecast: bool}
+ * @phpstan-type Finding array{file: string, line: int, id: string, type: string, symbol: string, level: string, rule_level: string, replace: string, note: string, match: string, context: string, guarded: bool, since: string, forecast: bool}
  * @phpstan-type Report array{level: string, files: int, alerts: int, notices: int, findings: array<int, Finding>}
  */
 final class DotclearRulesScanner
@@ -62,6 +63,9 @@ final class DotclearRulesScanner
     /** @var array<int, Rule> JS rules with a pattern */
     private array $js = [];
 
+    /** @var array<int, Rule> PHP rules with a pattern (searched in the code without comments) */
+    private array $php = [];
+
     /** @var array<string, true> Lower case names (full and short) of all PHP symbols, for guards */
     private array $names = [];
 
@@ -80,6 +84,8 @@ final class DotclearRulesScanner
         foreach (is_array($rules['dotclear'] ?? null) ? $rules['dotclear'] : [] as $k => $v) {
             $this->header[(string) $k] = is_scalar($v) ? (string) $v : '';
         }
+        // Next Dotclear version (major.minor): rules of a later version are forecasts, counted as notices
+        $next = preg_match('/^(\d+\.\d+)/', $this->header['next'] ?? '', $m) ? $m[1] : '';
         foreach (is_array($rules['rules'] ?? null) ? $rules['rules'] : [] as $raw) {
             $rule = self::normalize($raw);
             if ($rule === null) {
@@ -88,6 +94,7 @@ final class DotclearRulesScanner
             if ($version !== '' && $rule['since'] !== '' && version_compare($rule['since'], $version, '<=')) {
                 continue;
             }
+            $rule['forecast'] = $next !== '' && $rule['since'] !== '' && version_compare($rule['since'], $next, '>');
             $this->addRule($rule);
         }
     }
@@ -112,7 +119,8 @@ final class DotclearRulesScanner
             'replace' => $str('replace'),
             'note'    => $str('note'),
             'pattern' => $str('pattern'),
-            'unique'  => !empty($raw['unique']),
+            'unique'   => !empty($raw['unique']),
+            'forecast' => false,
         ];
         if ($rule['type'] === '' || $rule['symbol'] === '') {
             return null;
@@ -172,6 +180,8 @@ final class DotclearRulesScanner
             'match'      => 'sure',
             'context'    => 'php',
             'guarded'    => false,
+            'since'      => '',
+            'forecast'   => false,
         ];
     }
 
@@ -195,7 +205,7 @@ final class DotclearRulesScanner
             );
             foreach ($it as $f) {
                 $path = $f instanceof SplFileInfo ? $f->getPathname() : '';
-                if (str_ends_with($path, '.php') || str_ends_with($path, '.js')) {
+                if (str_ends_with($path, '.php') || str_ends_with($path, '.js') || str_ends_with($path, '.mjs')) {
                     $files[] = $path;
                 }
             }
@@ -216,6 +226,7 @@ final class DotclearRulesScanner
             $rel  = substr($path, strlen($dir) + 1);
             $code = (string) file_get_contents($path);
             $found = str_ends_with($path, '.php') ? $this->scanPhp($code, $rel) : $this->scanJs($code, $rel);
+            usort($found, fn (array $a, array $b): int => $a['line'] <=> $b['line']);
             array_push($findings, ...$found);
         }
 
@@ -250,18 +261,52 @@ final class DotclearRulesScanner
      */
     public function scanJs(string $code, string $file): array
     {
+        return array_values($this->patterns($this->js, $code, $file, 'js'));
+    }
+
+    /**
+     * Search the patterns of rules in a code.
+     *
+     * @param   array<int, Rule>    $rules
+     *
+     * @return  array<string, Finding>  Findings by line|id
+     */
+    private function patterns(array $rules, string $code, string $file, string $context): array
+    {
         $findings = [];
-        foreach ($this->js as $rule) {
-            if (@preg_match_all('/' . str_replace('/', '\/', $rule['pattern']) . '/', $code, $m, PREG_OFFSET_CAPTURE) > 0) {
+        foreach ($rules as $rule) {
+            if (@preg_match_all('/' . str_replace('/', '\/', $rule['pattern']) . '/m', $code, $m, PREG_OFFSET_CAPTURE) > 0) {
                 foreach ($m[0] as [$text, $offset]) {
                     $line = substr_count(substr($code, 0, $offset), "\n") + 1;
 
-                    $findings[$line . '|' . $rule['id']] = $this->finding($rule, $file, $line, 'sure', 'js');
+                    $findings[$line . '|' . $rule['id']] = $this->finding($rule, $file, $line, 'sure', $context);
                 }
             }
         }
 
-        return array_values($findings);
+        return $findings;
+    }
+
+    /**
+     * Get a PHP code without its comments, lines kept.
+     */
+    private function withoutComments(string $code): string
+    {
+        try {
+            $tokens = token_get_all($code);
+        } catch (Throwable) {
+            return $code;
+        }
+        $out = '';
+        foreach ($tokens as $t) {
+            if (is_array($t) && in_array($t[0], [T_COMMENT, T_DOC_COMMENT], true)) {
+                $out .= str_repeat("\n", substr_count($t[1], "\n"));
+            } else {
+                $out .= is_array($t) ? $t[1] : $t;
+            }
+        }
+
+        return $out;
     }
 
     /**
@@ -542,6 +587,11 @@ final class DotclearRulesScanner
             }
         }
 
+        // PHP rules with a pattern, searched in the code without comments
+        if ($this->php !== []) {
+            $findings += $this->patterns($this->php, $this->withoutComments($code), $file, 'pattern');
+        }
+
         // A class and one of its members on the same line: keep the member when it says what to use instead, else the class
         foreach ($findings as $key => $f) {
             if ($f['type'] !== 'class') {
@@ -622,8 +672,13 @@ final class DotclearRulesScanner
                 break;
 
             case 'js':
-                if ($rule['pattern'] !== '' && @preg_match('/' . str_replace('/', '\/', $rule['pattern']) . '/', '') !== false) {
-                    $this->js[] = $rule;
+            case 'php':
+                if ($rule['pattern'] !== '' && @preg_match('/' . str_replace('/', '\/', $rule['pattern']) . '/m', '') !== false) {
+                    if ($rule['type'] === 'js') {
+                        $this->js[] = $rule;
+                    } else {
+                        $this->php[] = $rule;
+                    }
                 }
 
                 break;
@@ -645,13 +700,15 @@ final class DotclearRulesScanner
             'id'         => $rule['id'],
             'type'       => $rule['type'],
             'symbol'     => $rule['symbol'],
-            'level'      => $rule['level'],
+            'level'      => $rule['forecast'] ? self::NOTICE : $rule['level'],
             'rule_level' => $rule['level'],
             'replace'    => $rule['replace'],
             'note'       => $rule['note'],
             'match'      => $match,
             'context'    => $context,
             'guarded'    => false,
+            'since'      => $rule['since'],
+            'forecast'   => $rule['forecast'],
         ];
     }
 
