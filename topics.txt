@@ -25,6 +25,8 @@ Documentation presentation navigation
 DotclearWatch statistique administration
 emailNotification notification mail
 emailOptionnel interaction
+emptyPlugin
+emptyTheme
 enhancePostContent edition redaction
 entryPhotoExifWidget photo metadonnee widget
 eventHandler edition geolocalisation widget
