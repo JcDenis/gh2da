@@ -13,6 +13,7 @@
  *
  *     $scanner = DotclearRulesScanner::fromFile('rules.json', '2.40.1');
  *     $report  = $scanner->scan('/path/to/module');
+ *     $report  = $scanner->scanFiles(['src/Backend.php' => $code, ...]);   // files in memory (zip)
  *
  * Each finding: file, line, id, type, symbol, level (alert, notice), rule_level (level of the rule), replace, note,
  * match (sure, probable), context (import, extends, implements, use, new, static, call, override, property, string, behavior, js, pattern),
@@ -210,27 +211,56 @@ final class DotclearRulesScanner
                 }
             }
         }
-        sort($files);
+        $codes = [];
+        foreach ($files as $path) {
+            $codes[substr($path, strlen($dir) + 1)] = (string) file_get_contents($path);
+        }
+
+        return $this->scanFiles($codes, $exclude);
+    }
+
+    /**
+     * Scan files given in memory, for example read from a zip without extracting it.
+     *
+     * Only .php, .js and .mjs files are scanned, outside the excluded directories.
+     *
+     * @param   array<string, string>   $files      Code of each file, by path relative to the module root ("/" separator)
+     * @param   array<int, string>      $exclude    Directories to skip (names, at any depth)
+     *
+     * @return  Report
+     */
+    public function scanFiles(array $files, array $exclude = self::EXCLUDE): array
+    {
+        $codes = [];
+        foreach ($files as $path => $code) {
+            $path = str_replace('\\', '/', (string) $path);
+            if (!str_ends_with($path, '.php') && !str_ends_with($path, '.js') && !str_ends_with($path, '.mjs')) {
+                continue;
+            }
+            if (array_intersect(array_slice(explode('/', $path), 0, -1), $exclude) !== []) {
+                continue;
+            }
+            $codes[$path] = $code;
+        }
+        ksort($codes, SORT_STRING);
 
         // First pass: classes of the module and their parents
         $this->parents  = [];
         $this->declared = [];
-        foreach ($files as $path) {
+        foreach ($codes as $path => $code) {
             if (str_ends_with($path, '.php')) {
-                $this->collectParents((string) file_get_contents($path));
+                $this->collectParents($code);
             }
         }
 
         $findings = [];
-        foreach ($files as $path) {
-            $rel  = substr($path, strlen($dir) + 1);
-            $code = (string) file_get_contents($path);
-            $found = str_ends_with($path, '.php') ? $this->scanPhp($code, $rel) : $this->scanJs($code, $rel);
+        foreach ($codes as $path => $code) {
+            $found = str_ends_with($path, '.php') ? $this->scanPhp($code, $path) : $this->scanJs($code, $path);
             usort($found, fn (array $a, array $b): int => $a['line'] <=> $b['line']);
             array_push($findings, ...$found);
         }
 
-        return $this->report($findings, count($files));
+        return $this->report($findings, count($codes));
     }
 
     /**

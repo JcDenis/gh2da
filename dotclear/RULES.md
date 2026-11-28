@@ -105,11 +105,12 @@ Corrections of a single server (DotclearWatchServer) are made there, not here; a
 ## Scanner
 
 [`scripts/DotclearRulesScanner.php`](https://github.com/JcDenis/gh2da/blob/master/scripts/DotclearRulesScanner.php) checks a module
-against the rules. One class, no dependency on Dotclear (PHP 8.2+), meant to be reused as is (DotclearWatch, CI of modules):
+against the rules. One class, no dependency on Dotclear (PHP 8.2+), meant to be reused as is (DotclearWatch, daRepo, CI of modules):
 
 ```php
 $scanner = DotclearRulesScanner::fromFile('rules.json', '2.40.1'); // current Dotclear version: rules already applied are skipped
 $report  = $scanner->scan('/path/to/module');                      // level (alert, notice, ok), files, alerts, notices, findings
+$report  = $scanner->scanFiles(['src/Backend.php' => $code]);      // same with files in memory (read from a zip, never extracted)
 $php     = $scanner->checkPhp(PHP_VERSION);                         // finding or null
 ```
 

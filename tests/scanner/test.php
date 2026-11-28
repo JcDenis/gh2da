@@ -21,6 +21,20 @@ $lines[] = 'php 8.1.0: ' . ($scanner->checkPhp('8.1.0') === null ? 'ok' : 'alert
 $lines[] = 'php 8.4.0: ' . ($scanner->checkPhp('8.4.0') === null ? 'ok' : 'alert');
 $got     = implode("\n", $lines) . "\n";
 
+// Same module given in memory (as read from a zip): same findings, excluded directories skipped
+$files = [];
+$it    = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(__DIR__ . '/module', FilesystemIterator::SKIP_DOTS));
+foreach ($it as $f) {
+    if ($f instanceof SplFileInfo && $f->isFile()) {
+        $files[str_replace('\\', '/', substr($f->getPathname(), strlen(__DIR__ . '/module') + 1))] = (string) file_get_contents($f->getPathname());
+    }
+}
+$memory = $scanner->scanFiles($files);
+if ($memory !== $report) {
+    echo "Scanner test failed: scanFiles() and scan() differ\n";
+    exit(1);
+}
+
 $file = __DIR__ . '/expected.txt';
 if (in_array('--update', $argv, true)) {
     file_put_contents($file, $got);
